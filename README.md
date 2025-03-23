@@ -1,4 +1,17 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## Youtube Clone
+
+This is a youtube clone built with Next.js and TypeScript.
+
+## Tech Stack
+
+- Next.js
+- TypeScript
+- Tailwind CSS
+- Lucide Icons
+- Class Variance Authority
+- clsx
+- tw-animate-css
+- react
 
 ## Getting Started
 
