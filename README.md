@@ -15,16 +15,30 @@ This is a video streaming platform similar to YouTube, built with Next.js and Ty
 
 ## Getting Started
 
+### Prerequisites
+
+- bun (v1.0.0 or higher)
+
+### Installation
+
+1. Clone the repository:
+
+```bash
+git clone https://github.com/PrtHub/streaming-platform.git
+```
+
+2. Install dependencies:
+
+```bash
+bun install
+```
+
+### Development
+
 First, run the development server:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+bun run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
