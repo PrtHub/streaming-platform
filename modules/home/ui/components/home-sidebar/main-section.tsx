@@ -8,9 +8,10 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
+import { useAuth, useClerk } from "@clerk/nextjs";
 import { Home, Library, PlaySquareIcon, Flame } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 const items = [
   {
@@ -40,8 +41,9 @@ const items = [
 ];
 
 export const MainSection = () => {
-  const router = useRouter();
   const pathname = usePathname();
+  const { isSignedIn } = useAuth();
+  const clerk = useClerk();
 
   return (
     <SidebarGroup>
@@ -53,7 +55,12 @@ export const MainSection = () => {
                 tooltip={item.title}
                 isActive={pathname === item.href}
                 asChild
-                onClick={() => router.push(item.href)}
+                onClick={(e) => {
+                  if (item.auth && !isSignedIn) {
+                    e.preventDefault();
+                    return clerk.openSignIn();
+                  }
+                }}
                 className={cn("h-10 transition-all duration-300")}
               >
                 <Link

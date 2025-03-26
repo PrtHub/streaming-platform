@@ -9,16 +9,18 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@clerk/clerk-react";
+import { useClerk } from "@clerk/nextjs";
 import { History, ThumbsUp, ListVideo, ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 const items = [
   {
     title: "History",
     href: "/history",
     icon: <History className="size-5" />,
-    auth: false,
+    auth: true,
   },
   {
     title: "Liked videos",
@@ -35,8 +37,9 @@ const items = [
 ];
 
 export const PersonalSection = () => {
-  const router = useRouter();
   const pathname = usePathname();
+  const clerk = useClerk();
+  const { isSignedIn } = useAuth();
 
   return (
     <SidebarGroup>
@@ -51,7 +54,12 @@ export const PersonalSection = () => {
                 tooltip={item.title}
                 isActive={pathname === item.href}
                 asChild
-                onClick={() => router.push(item.href)}
+                onClick={(e) => {
+                  if (item.auth && !isSignedIn) {
+                    e.preventDefault();
+                    return clerk.openSignIn();
+                  }
+                }}
                 className={cn("h-10 transition-all duration-300")}
               >
                 <Link
