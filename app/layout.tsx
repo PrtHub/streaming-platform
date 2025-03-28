@@ -3,6 +3,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { Roboto } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
+import { TRPCProvider } from "@/trpc/client";
 
 const roboto = Roboto({
   subsets: ["latin"],
@@ -24,7 +25,7 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en">
         <body className={`${roboto.variable} antialiased dark`}>
-          {children}
+          <TRPCProvider>{children}</TRPCProvider>
         </body>
       </html>
     </ClerkProvider>

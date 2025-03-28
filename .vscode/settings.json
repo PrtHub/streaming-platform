@@ -13,5 +13,7 @@
     },
     "css.validate": false,
     "tailwindCSS.validate": true,
-    "tailwindCSS.experimental.configFile": null
+    "tailwindCSS.experimental.configFile": null,
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "typescript.enablePromptUseWorkspaceTsdk": true
   }
