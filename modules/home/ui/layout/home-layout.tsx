@@ -9,7 +9,7 @@ const HomeLayout = ({ children }: { children: React.ReactNode }) => {
         <HomeNavbar />
         <div className="min-h-screen flex pt-[4rem]">
           <HomeSidebar />
-          <main className="flex-1 overflow-y-auto">{children}</main>
+          <main className="flex-1 overflow-y-auto pt-4 px-5">{children}</main>
         </div>
       </div>
     </SidebarProvider>
