@@ -1,3 +1,4 @@
+import { relations } from "drizzle-orm";
 import {
   pgTable,
   text,
@@ -19,6 +20,10 @@ export const usersTable = pgTable(
   (table) => [uniqueIndex("clerk_id_idx").on(table.clerkId)]
 );
 
+export const usersRelations = relations(usersTable, ({ many }) => ({
+  videos: many(videosTable),
+}));
+
 export const categoriesTable = pgTable(
   "categories",
   {
@@ -31,7 +36,34 @@ export const categoriesTable = pgTable(
   (table) => [uniqueIndex("name_idx").on(table.name)]
 );
 
-export type UserInsertType = typeof usersTable.$inferInsert;
-export type UserSelectType = typeof usersTable.$inferSelect;
-export type CategoryInsertType = typeof categoriesTable.$inferInsert;
-export type CategorySelectType = typeof categoriesTable.$inferSelect;
+export const categoriesRelations = relations(categoriesTable, ({ many }) => ({
+  videos: many(videosTable),
+}));
+
+export const videosTable = pgTable(
+  "videos",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    title: text("title").notNull(),
+    description: text("description"),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => usersTable.id, { onDelete: "cascade" }),
+    categoryId: uuid("category_id").references(() => categoriesTable.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  }
+);
+
+export const videoRelations = relations(videosTable, ({ one }) => ({
+  user: one(usersTable, {
+    fields: [videosTable.userId],
+    references: [usersTable.id],
+  }),
+  category: one(categoriesTable, {
+    fields: [videosTable.categoryId],
+    references: [categoriesTable.id],
+  }),
+}));

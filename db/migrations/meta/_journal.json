@@ -15,6 +15,20 @@
       "when": 1743216806996,
       "tag": "0001_acoustic_young_avengers",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1743329263323,
+      "tag": "0002_striped_onslaught",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1743345753666,
+      "tag": "0003_loose_taskmaster",
+      "breakpoints": true
     }
   ]
 }
