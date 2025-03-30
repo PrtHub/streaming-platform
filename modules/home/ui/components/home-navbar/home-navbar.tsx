@@ -9,7 +9,7 @@ export const HomeNavbar = () => {
   return (
     <nav className="fixed inset-0 h-16 bg-background flex items-center px-2 pr-5 z-50 border-b-[1px] border-border/10">
       <div className="flex items-center gap-4 w-full">
-        <section className="flex items-center flex-shrink-0">
+        <section className="flex items-center flex-shrink-0 ml-1.5">
           <SidebarTrigger className="cursor-pointer" />
           <Link href="/">
             <div className="flex items-center gap-1 p-4 ">
