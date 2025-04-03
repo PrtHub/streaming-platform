@@ -1,9 +1,11 @@
 "use client";
 
+import { ResponsiveModal } from "@/components/responsive-modal";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/trpc/client";
 import { Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
+import { StudioUploader } from "./studio-uploader";
 
 const StudioUploadModal = () => {
   const utils = trpc.useUtils();
@@ -19,19 +21,35 @@ const StudioUploadModal = () => {
   });
 
   return (
-    <Button
-      variant="outline"
-      className="flex items-center gap-1.5 rounded-full px-4 bg-neutral-800 hover:bg-neutral-700 text-white cursor-pointer"
-      onClick={() => createVideo.mutate()}
-      disabled={createVideo.isPending}
-    >
-      {createVideo.isPending ? (
-        <Loader2 className="size-5 animate-spin" />
-      ) : (
-        <Plus className="size-5" />
-      )}
-      <span>Create</span>
-    </Button>
+    <>
+      <ResponsiveModal
+        title="Upload Video"
+        open={!!createVideo.data?.url}
+        onOpenChange={() => createVideo.reset()}
+      >
+        {createVideo.data?.url ? (
+          <StudioUploader
+            endpoint={createVideo.data?.url}
+            onSuccess={() => {}}
+          />
+        ) : (
+          <Loader2 className="size-5 animate-spin" />
+        )}
+      </ResponsiveModal>
+      <Button
+        variant="outline"
+        className="flex items-center gap-1.5 rounded-full px-4 bg-neutral-800 hover:bg-neutral-700 text-white cursor-pointer"
+        onClick={() => createVideo.mutate()}
+        disabled={createVideo.isPending}
+      >
+        {createVideo.isPending ? (
+          <Loader2 className="size-5 animate-spin" />
+        ) : (
+          <Plus className="size-5" />
+        )}
+        <span>Create</span>
+      </Button>
+    </>
   );
 };
 
