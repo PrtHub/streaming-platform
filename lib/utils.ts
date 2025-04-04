@@ -30,3 +30,50 @@ export const formatRelativeTime = (date: Date): string => {
   const diffInYears = Math.floor(diffInMonths / 12);
   return `${diffInYears} year${diffInYears > 1 ? "s" : ""} ago`;
 };
+
+export function formatDuration(milliseconds: number): string {
+  if (isNaN(milliseconds) || milliseconds < 0) {
+    return "0:00";
+  }
+
+  const totalSeconds = Math.floor(milliseconds / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  const formattedSeconds = seconds.toString().padStart(2, "0");
+  const formattedMinutes = minutes.toString().padStart(2, "0");
+
+  if (hours > 0) {
+    const formattedHours = hours.toString();
+    return `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
+  }
+
+  return `${formattedMinutes}:${formattedSeconds}`;
+}
+
+export const formatDateSimple = (date: Date): string => {
+  if (!(date instanceof Date) || isNaN(date.getTime())) {
+    return "Invalid Date"; // Handle invalid dates
+  }
+
+  const day = date.getDate().toString().padStart(2, "0");
+  const monthNames = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+  const month = monthNames[date.getMonth()];
+  const year = date.getFullYear();
+
+  return `${day} ${month} ${year}`;
+};

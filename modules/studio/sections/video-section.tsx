@@ -13,9 +13,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatRelativeTime } from "@/lib/utils";
 import Link from "next/link";
-// Format date to relative time (e.g., "2 days ago")
+import VideoThumbnail from "@/modules/videos/ui/components/video-thumbnail";
+import { formatDateSimple } from "@/lib/utils";
+import { Globe2Icon, LockIcon } from "lucide-react";
 
 const VideoSection = () => {
   const [data, query] = trpc.studio.getMany.useSuspenseInfiniteQuery(
@@ -38,9 +39,9 @@ const VideoSection = () => {
                 <TableHead>Status</TableHead>
                 <TableHead>Visibility</TableHead>
                 <TableHead>Date</TableHead>
-                <TableHead className="text-right">Views</TableHead>
-                <TableHead className="text-right">Comments</TableHead>
-                <TableHead className="text-right pr-6">Likes</TableHead>
+                <TableHead className="text-center">Views</TableHead>
+                <TableHead className="text-center">Comments</TableHead>
+                <TableHead className="text-center">Likes</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -52,19 +53,45 @@ const VideoSection = () => {
                     legacyBehavior
                   >
                     <TableRow className="h-12 cursor-pointer">
-                      <TableCell className="font-medium pl-6">
-                        {video.title}
-                      </TableCell>
-                      <TableCell>{"Published"}</TableCell>
-                      <TableCell>{"Public"}</TableCell>
                       <TableCell>
-                        {video.updatedAt
-                          ? formatRelativeTime(new Date(video.updatedAt))
+                        <div className="flex items-center gap-4">
+                          <div className="relative shrink-0 w-36 aspect-video">
+                            <VideoThumbnail
+                              thumbnailUrl={video?.thumbnailUrl}
+                              previewUrl={video?.previewUrl}
+                              title={video.title}
+                              duration={video.duration ?? 0}
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <span className="line-clamp-1">{video.title}</span>
+                            <span className="text-xs text-muted-foreground line-clamp-2">
+                              {video.description || "No description"}
+                            </span>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className="capitalize">{video.muxStatus}</span>
+                      </TableCell>
+                      <TableCell className="capitalize">
+                        <div className="flex items-center gap-2">
+                          {video.visibility === "private" ? (
+                            <LockIcon className="w-4 h-4" />
+                          ) : (
+                            <Globe2Icon className="w-4 h-4" />
+                          )}
+                          {video.visibility}
+                        </div>
+                      </TableCell>
+                      <TableCell className="truncate">
+                        {video.createdAt
+                          ? formatDateSimple(new Date(video.createdAt))
                           : "Unknown"}
                       </TableCell>
-                      <TableCell className="text-right">{0}</TableCell>
-                      <TableCell className="text-right">{0}</TableCell>
-                      <TableCell className="text-right pr-6">{0}</TableCell>
+                      <TableCell className="text-center">{0}</TableCell>
+                      <TableCell className="text-center">{0}</TableCell>
+                      <TableCell className="text-center">{0}</TableCell>
                     </TableRow>
                   </Link>
                 ))
