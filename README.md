@@ -5,13 +5,15 @@ This is a video streaming platform similar to YouTube, built with Next.js and Ty
 ## Tech Stack
 
 - Next.js
+- React
 - TypeScript
 - Tailwind CSS
 - Lucide Icons
-- Class Variance Authority
-- clsx
-- tw-animate-css
-- react
+- tRPC
+- Upstash
+- Mux
+- Zod
+- Shadcn
 
 ## Getting Started
 
