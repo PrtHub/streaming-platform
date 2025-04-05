@@ -17,6 +17,7 @@ import Link from "next/link";
 import VideoThumbnail from "@/modules/videos/ui/components/video-thumbnail";
 import { formatDateSimple } from "@/lib/utils";
 import { Globe2Icon, LockIcon } from "lucide-react";
+import { VideoSectionSkeleton } from "../ui/components/skeletons/video-section-skeleton";
 
 const VideoSection = () => {
   const [data, query] = trpc.studio.getMany.useSuspenseInfiniteQuery(
@@ -29,7 +30,7 @@ const VideoSection = () => {
   );
 
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<VideoSectionSkeleton count={4} />}>
       <ErrorBoundary fallback={<div>Something went wrong</div>}>
         <div className="rounded border w-full">
           <Table>
