@@ -7,6 +7,55 @@ import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
 export const videosRouter = createTRPCRouter({
+  restoreThumbnail: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const { id: userId } = ctx.user;
+
+      if (!input.id) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Invalid video ID",
+        });
+      }
+
+      const [existingVideo] = await db
+        .select()
+        .from(videosTable)
+        .where(
+          and(eq(videosTable.id, input.id), eq(videosTable.userId, userId))
+        )
+        .limit(1);
+
+      if (!existingVideo) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Video not found",
+        });
+      }
+
+      if (!existingVideo.muxPlaybackId) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Video playback ID not found",
+        });
+      }
+
+      const thumbnailUrl = `https://image.mux.com/${existingVideo.muxPlaybackId}/thumbnail.png`;
+
+      const [updatedVideo] = await db
+        .update(videosTable)
+        .set({
+          thumbnailUrl,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(eq(videosTable.id, input.id), eq(videosTable.userId, userId))
+        )
+        .returning();
+
+      return updatedVideo;
+    }),
   delete: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
