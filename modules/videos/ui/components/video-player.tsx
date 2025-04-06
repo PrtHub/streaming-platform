@@ -3,6 +3,7 @@
 import MuxPlayer from "@mux/mux-player-react";
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import { THUMBNAIL_URL } from "@/constants";
 
 interface VideoPlayerProps {
   playbackId?: string | null;
@@ -59,13 +60,13 @@ const VideoPlayer = ({
   return (
     <MuxPlayer
       playbackId={playbackId}
-      poster={thumbnailUrl ?? "/placeholder.svg"}
+      poster={thumbnailUrl ?? THUMBNAIL_URL}
       playerInitTime={0}
       thumbnailTime={0}
       autoPlay={autoPlay}
       onPlay={onPlay}
       accentColor="#FF2056"
-      className="w-full h-full object-contain"
+      className="w-full h-full object-cover"
       onError={() => setHasError(true)}
     />
   );

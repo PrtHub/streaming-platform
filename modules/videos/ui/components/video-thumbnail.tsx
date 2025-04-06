@@ -1,3 +1,4 @@
+import { THUMBNAIL_URL } from "@/constants";
 import { formatDuration } from "@/lib/utils";
 import Image from "next/image";
 
@@ -18,13 +19,13 @@ const VideoThumbnail = ({
     <div className="relative group">
       <div className="relative overflow-hidden aspect-video rounded-xl w-full">
         <Image
-          src={thumbnailUrl ?? "/placeholder.svg"}
+          src={thumbnailUrl ?? THUMBNAIL_URL}
           alt={title}
           fill
           className="object-cover rounded-xl w-full h-full group-hover:opacity-0"
         />
         <Image
-          src={previewUrl ?? thumbnailUrl ?? "/placeholder.svg"}
+          src={previewUrl ?? thumbnailUrl ?? THUMBNAIL_URL}
           alt={title}
           fill
           className="object-cover rounded-xl w-full h-full opacity-0 group-hover:opacity-100"

@@ -13,9 +13,12 @@ import {
   CheckIcon,
   CopyIcon,
   Globe2Icon,
+  ImagePlusIcon,
   Loader2,
   LockIcon,
   MoreVerticalIcon,
+  RefreshCw,
+  SparklesIcon,
   Trash2Icon,
 } from "lucide-react";
 import { Suspense, useState } from "react";
@@ -44,12 +47,18 @@ import { toast } from "sonner";
 import VideoPlayer from "@/modules/videos/ui/components/video-player";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { THUMBNAIL_URL } from "@/constants";
+import ThumbnailUploadModal from "../ui/components/thumbnail-upload-modal";
 
 const FormSection = ({ videoId }: { videoId: string }) => {
   const router = useRouter();
   const utils = trpc.useUtils();
   const [video] = trpc.studio.getOne.useSuspenseQuery({ id: videoId });
   const [categories] = trpc.categories.getMany.useSuspenseQuery();
+
+  const [isCopied, setIsCopied] = useState(false);
+  const [isThumbnailUploadOpen, setIsThumbnailUploadOpen] = useState(false);
 
   const update = trpc.videos.update.useMutation({
     onSuccess: () => {
@@ -82,8 +91,6 @@ const FormSection = ({ videoId }: { videoId: string }) => {
     update.mutate(data);
   };
 
-  const [isCopied, setIsCopied] = useState(false);
-
   const fullUrl = `${
     process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
   }/videos/${video.id}`;
@@ -100,6 +107,11 @@ const FormSection = ({ videoId }: { videoId: string }) => {
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <ErrorBoundary fallback={<div>Something went wrong</div>}>
+        <ThumbnailUploadModal
+          videoId={videoId}
+          open={isThumbnailUploadOpen}
+          onOpenChange={setIsThumbnailUploadOpen}
+        />
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <header className="flex justify-between items-center mb-6 px-2">
@@ -175,6 +187,54 @@ const FormSection = ({ videoId }: { videoId: string }) => {
                 />
                 <FormField
                   control={form.control}
+                  name="thumbnailUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Thumbnail</FormLabel>
+                      <FormControl>
+                        <div className="p-0.5 border border-dashed relative w-[153px] h-[84px]  group">
+                          <Image
+                            src={
+                              video.thumbnailUrl || field.value || THUMBNAIL_URL
+                            }
+                            alt="Thumbnail"
+                            fill
+                            className="object-cover"
+                          />
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="absolute top-0 right-0 cursor-pointer opacity-0 group-hover:opacity-100 transition duration-200 ease-in-out"
+                              >
+                                <MoreVerticalIcon className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                className="cursor-pointer"
+                                onClick={() => setIsThumbnailUploadOpen(true)}
+                              >
+                                <ImagePlusIcon className="w-4 h-4" /> Change
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="cursor-pointer">
+                                <SparklesIcon className="w-4 h-4" /> AI
+                                Generated
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="cursor-pointer">
+                                <RefreshCw className="w-4 h-4" /> Restore
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
                   name="categoryId"
                   render={({ field }) => (
                     <FormItem className="w-full">
@@ -203,7 +263,7 @@ const FormSection = ({ videoId }: { videoId: string }) => {
               </article>
               <aside className="lg:col-span-2 flex flex-col gap-y-8">
                 <section className="flex flex-col gap-4 bg-black/20 rounded-md overflow-hidden h-fit">
-                  <figure className="aspect-video overflow-hidden relative">
+                  <figure className="aspect-video w-full overflow-hidden relative">
                     <VideoPlayer
                       playbackId={video.muxPlaybackId}
                       thumbnailUrl={video.thumbnailUrl}
