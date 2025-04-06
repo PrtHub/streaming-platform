@@ -6,7 +6,7 @@ import { and, eq } from "drizzle-orm";
 import { auth } from "@clerk/nextjs/server";
 
 import { createUploadthing, type FileRouter } from "uploadthing/next";
-import { UploadThingError } from "uploadthing/server";
+import { UploadThingError, UTApi } from "uploadthing/server";
 
 const f = createUploadthing();
 
@@ -31,12 +31,40 @@ export const ourFileRouter = {
 
       if (!user) throw new UploadThingError("Unauthorized");
 
+      const [existingVideo] = await db
+        .select({ thumbnailKey: videosTable.thumbnailKey })
+        .from(videosTable)
+        .where(
+          and(
+            eq(videosTable.id, input.videoId),
+            eq(videosTable.userId, user.id)
+          )
+        )
+        .limit(1);
+
+      if (!existingVideo) throw new UploadThingError("Unauthorized");
+
+      if (existingVideo.thumbnailKey) {
+        const utapi = new UTApi();
+
+        await utapi.deleteFiles(existingVideo.thumbnailKey);
+        await db
+          .update(videosTable)
+          .set({ thumbnailKey: null, thumbnailUrl: null })
+          .where(
+            and(
+              eq(videosTable.id, input.videoId),
+              eq(videosTable.userId, user.id)
+            )
+          );
+      }
+
       return { user, ...input };
     })
     .onUploadComplete(async ({ metadata, file }) => {
       await db
         .update(videosTable)
-        .set({ thumbnailUrl: file.url })
+        .set({ thumbnailUrl: file.ufsUrl, thumbnailKey: file.key })
         .where(
           and(
             eq(videosTable.id, metadata.videoId),
@@ -47,7 +75,7 @@ export const ourFileRouter = {
       return {
         uploadedBy: metadata.user.id,
         videoId: metadata.videoId,
-        url: file.url,
+        url: file.ufsUrl,
       };
     }),
 } satisfies FileRouter;

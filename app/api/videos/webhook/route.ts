@@ -11,6 +11,7 @@ import {
   VideoAssetTrackReadyWebhookEvent,
   VideoAssetDeletedWebhookEvent,
 } from "@mux/mux-node/resources/webhooks.mjs";
+import { UTApi } from "uploadthing/server";
 
 const WEBHOOK_SECRET = process.env.MUX_WEBHOOK_SECRET;
 
@@ -83,9 +84,20 @@ export const POST = async (request: Request) => {
         });
       }
 
-      const thumbnailUrl = `https://image.mux.com/${playbackId}/thumbnail.png`;
-      const previewUrl = `https://image.mux.com/${playbackId}/animated.gif`;
       const duration = data.duration ? Math.round(data.duration * 1000) : 0;
+
+      const tempThumbnailUrl = `https://image.mux.com/${playbackId}/thumbnail.png`;
+      const tempPreviewUrl = `https://image.mux.com/${playbackId}/animated.gif`;
+
+      const utapi = new UTApi();
+
+      const [uploadedThumbnail, uploadedPreview] =
+        await utapi.uploadFilesFromUrl([tempThumbnailUrl, tempPreviewUrl]);
+
+      const { key: thumbnailKey, ufsUrl: thumbnailUrl } =
+        uploadedThumbnail?.data ?? {};
+      const { key: previewKey, ufsUrl: previewUrl } =
+        uploadedPreview?.data ?? {};
 
       const updatePayload = {
         muxStatus: data.status,
@@ -93,6 +105,8 @@ export const POST = async (request: Request) => {
         muxPlaybackId: playbackId,
         thumbnailUrl,
         previewUrl,
+        thumbnailKey,
+        previewKey,
         duration,
       };
 
