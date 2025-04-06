@@ -55,7 +55,7 @@ export async function POST(req: Request) {
   if (eventType === "user.created") {
     const data = evt.data;
     await db.insert(usersTable).values({
-      clerk_id: data.id,
+      clerkId: data.id,
       name: data.first_name + " " + data.last_name,
       imageUrl: data.image_url,
     });
@@ -69,7 +69,7 @@ export async function POST(req: Request) {
         name: data.first_name + " " + data.last_name,
         imageUrl: data.image_url,
       })
-      .where(eq(usersTable.clerk_id, data.id));
+      .where(eq(usersTable.clerkId, data.id));
   }
 
   if (eventType === "user.deleted") {
@@ -79,7 +79,7 @@ export async function POST(req: Request) {
         status: 400,
       });
     }
-    await db.delete(usersTable).where(eq(usersTable.clerk_id, data.id));
+    await db.delete(usersTable).where(eq(usersTable.clerkId, data.id));
   }
 
   return new Response("Webhook received", { status: 200 });
