@@ -21,6 +21,11 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  allowedDevOrigins: [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "https://seemingly-top-stork.ngrok-free.app",
+  ],
 };
 
 export default nextConfig;
