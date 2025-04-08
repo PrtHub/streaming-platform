@@ -21,7 +21,7 @@ import {
   SparklesIcon,
   Trash2Icon,
 } from "lucide-react";
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -93,13 +93,24 @@ const FormSection = ({ videoId }: { videoId: string }) => {
     },
   });
 
-  const generateThumbnail = trpc.videos.generateThumnail.useMutation({
-    onSuccess: () => {
-      utils.studio.getOne.invalidate({ id: videoId });
-      toast.success("Thumbnail is generating", {
-        description:
-          "Please wait while we generate a thumbnail for your video.",
-      });
+  const generateTitle = trpc.videos.generateAiTitle.useMutation({
+    onSuccess: async () => {
+      await utils.studio.getOne.invalidate({ id: videoId });
+      utils.studio.getMany.invalidate();
+      toast.success("Title generated!");
+      await utils.studio.getOne.refetch({ id: videoId });
+    },
+    onError: (err) => {
+      toast.error(err.message);
+    },
+  });
+
+  const generateDescription = trpc.videos.generateAiDescription.useMutation({
+    onSuccess: async () => {
+      await utils.studio.getOne.invalidate({ id: videoId });
+      utils.studio.getMany.invalidate();
+      toast.success("Description generated!");
+      await utils.studio.getOne.refetch({ id: videoId });
     },
     onError: (err) => {
       toast.error(err.message);
@@ -110,6 +121,10 @@ const FormSection = ({ videoId }: { videoId: string }) => {
     resolver: zodResolver(updateVideoSchema),
     defaultValues: video,
   });
+
+  useEffect(() => {
+    form.reset(video);
+  }, [video, form]);
 
   const onSubmit = (data: z.infer<typeof updateVideoSchema>) => {
     update.mutate(data);
@@ -182,7 +197,26 @@ const FormSection = ({ videoId }: { videoId: string }) => {
                   name="title"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Title</FormLabel>
+                      <div className="flex justify-between gap-10">
+                        <FormLabel className="font-semibold">Title</FormLabel>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          type="button"
+                          className="cursor-pointer"
+                          title="Generate title with AI"
+                          onClick={() => {
+                            generateTitle.mutate({ id: videoId });
+                          }}
+                          disabled={generateTitle.isPending}
+                        >
+                          {generateTitle.isPending ? (
+                            <Loader2 className="size-4 animate-spin" />
+                          ) : (
+                            <SparklesIcon className="w-4 h-4" />
+                          )}
+                        </Button>
+                      </div>
                       <FormControl>
                         <Input {...field} placeholder="Enter video title" />
                       </FormControl>
@@ -195,14 +229,35 @@ const FormSection = ({ videoId }: { videoId: string }) => {
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description</FormLabel>
+                      <div className="flex justify-between gap-10">
+                        <FormLabel className="font-semibold">
+                          Description
+                        </FormLabel>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          type="button"
+                          className="cursor-pointer"
+                          title="Generate description with AI"
+                          onClick={() => {
+                            generateDescription.mutate({ id: videoId });
+                          }}
+                          disabled={generateDescription.isPending}
+                        >
+                          {generateDescription.isPending ? (
+                            <Loader2 className="size-4 animate-spin" />
+                          ) : (
+                            <SparklesIcon className="w-4 h-4" />
+                          )}
+                        </Button>
+                      </div>
                       <FormControl>
                         <Textarea
                           {...field}
                           value={field.value || ""}
                           placeholder="Enter video description"
                           className=""
-                          rows={8}
+                          rows={10}
                         />
                       </FormControl>
                       <FormMessage />
@@ -214,7 +269,7 @@ const FormSection = ({ videoId }: { videoId: string }) => {
                   name="thumbnailUrl"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Thumbnail</FormLabel>
+                      <FormLabel className="font-semibold">Thumbnail</FormLabel>
                       <FormControl>
                         <div className="p-0.5 border border-dashed relative w-[153px] h-[84px]  group">
                           <Image
@@ -242,7 +297,7 @@ const FormSection = ({ videoId }: { videoId: string }) => {
                               >
                                 <ImagePlusIcon className="w-4 h-4" /> Change
                               </DropdownMenuItem>
-                              <DropdownMenuItem
+                              {/* <DropdownMenuItem
                                 className="cursor-pointer"
                                 onClick={() =>
                                   generateThumbnail.mutate({ id: videoId })
@@ -250,7 +305,7 @@ const FormSection = ({ videoId }: { videoId: string }) => {
                               >
                                 <SparklesIcon className="w-4 h-4" /> AI
                                 Generated
-                              </DropdownMenuItem>
+                              </DropdownMenuItem> */}
                               <DropdownMenuItem
                                 className="cursor-pointer"
                                 onClick={() =>
