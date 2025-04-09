@@ -117,6 +117,18 @@ const FormSection = ({ videoId }: { videoId: string }) => {
     },
   });
 
+  const generateThumbnail = trpc.videos.generateAiThumbnail.useMutation({
+    onSuccess: async () => {
+      await utils.studio.getOne.invalidate({ id: videoId });
+      utils.studio.getMany.invalidate();
+      toast.success("Thumbnail generated!");
+      await utils.studio.getOne.refetch({ id: videoId });
+    },
+    onError: (err) => {
+      toast.error(err.message);
+    },
+  });
+
   const form = useForm<z.infer<typeof updateVideoSchema>>({
     resolver: zodResolver(updateVideoSchema),
     defaultValues: video,
@@ -297,7 +309,7 @@ const FormSection = ({ videoId }: { videoId: string }) => {
                               >
                                 <ImagePlusIcon className="w-4 h-4" /> Change
                               </DropdownMenuItem>
-                              {/* <DropdownMenuItem
+                              <DropdownMenuItem
                                 className="cursor-pointer"
                                 onClick={() =>
                                   generateThumbnail.mutate({ id: videoId })
@@ -305,7 +317,7 @@ const FormSection = ({ videoId }: { videoId: string }) => {
                               >
                                 <SparklesIcon className="w-4 h-4" /> AI
                                 Generated
-                              </DropdownMenuItem> */}
+                              </DropdownMenuItem>
                               <DropdownMenuItem
                                 className="cursor-pointer"
                                 onClick={() =>

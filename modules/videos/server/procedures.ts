@@ -9,6 +9,155 @@ import { UTApi } from "uploadthing/server";
 import { z } from "zod";
 
 export const videosRouter = createTRPCRouter({
+  generateAiThumbnail: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const { id: userId } = ctx.user;
+
+      if (!input.id) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Invalid video ID",
+        });
+      }
+
+      const [video] = await db
+        .select()
+        .from(videosTable)
+        .where(
+          and(eq(videosTable.id, input.id), eq(videosTable.userId, userId))
+        )
+        .limit(1);
+
+      if (!video) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Video not found",
+        });
+      }
+
+      if (!video.muxPlaybackId || !video.muxTrackId) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Video playback ID or track ID not found",
+        });
+      }
+
+      const trackUrl = `https://stream.mux.com/${video.muxPlaybackId}/text/${video.muxTrackId}.txt`;
+      const response = await fetch(trackUrl);
+      const text = await response.text();
+
+      if (!text) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Video text not found",
+        });
+      }
+
+      // if (video.thumbnailUrl) {
+      //   throw new TRPCError({
+      //     code: "BAD_REQUEST",
+      //     message:
+      //       "AI thumbnail already generated for this video (limit 1 per video)",
+      //   });
+      // }
+
+      const geminiResponse = await geminiAI.models.generateContent({
+        model: "gemini-2.0-flash-exp-image-generation",
+        contents: `You are a professional YouTube thumbnail designer. Create a high-quality, eye-catching thumbnail image based on the following video transcript: 
+
+"${text.substring(0, 2000)}"
+
+Requirements:
+- Create a visually striking, professional-looking thumbnail image
+- The image should clearly represent the main topic of the video
+- Use vibrant colors and clear composition
+- Make it attention-grabbing but not clickbait-style
+- Include key visual elements that represent the video content
+- Make it appealing to the likely target audience
+- Do not include any text on the thumbnail
+- Use a 16:9 aspect ratio
+
+I need ONLY the image, no explanations or text responses.`,
+        config: {
+          responseModalities: ["Text", "Image"],
+        },
+      });
+
+      let imageData = null;
+
+      if (geminiResponse?.candidates?.[0]?.content?.parts) {
+        for (const part of geminiResponse.candidates[0].content.parts) {
+          if (part.inlineData?.mimeType?.startsWith("image/")) {
+            imageData = part.inlineData.data;
+            break;
+          }
+        }
+      }
+
+      if (!imageData) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to generate thumbnail image",
+        });
+      }
+
+      const utapi = new UTApi();
+
+      if (video.thumbnailKey) {
+        await utapi.deleteFiles(video.thumbnailKey);
+        await db
+          .update(videosTable)
+          .set({ thumbnailKey: null, thumbnailUrl: null })
+          .where(
+            and(eq(videosTable.id, input.id), eq(videosTable.userId, userId))
+          );
+      }
+
+      const dataUrl = `data:image/png;base64,${imageData}`;
+
+      const uploadResponse = await utapi.uploadFilesFromUrl(dataUrl);
+
+      if (!uploadResponse || !Array.isArray(uploadResponse)) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to upload thumbnail: Invalid response format",
+        });
+      }
+
+      const fileData = uploadResponse[0];
+
+      if (!fileData || !fileData.key || !fileData.ufsUrl) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to upload thumbnail: Missing file data",
+        });
+      }
+
+      const thumbnailKey = fileData.key;
+      const thumbnailUrl = fileData.ufsUrl;
+
+      const [updatedVideo] = await db
+        .update(videosTable)
+        .set({
+          thumbnailUrl,
+          thumbnailKey,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(eq(videosTable.id, input.id), eq(videosTable.userId, userId))
+        )
+        .returning();
+
+      if (!updatedVideo) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update video with generated thumbnail",
+        });
+      }
+
+      return thumbnailUrl;
+    }),
   generateAiDescription: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {

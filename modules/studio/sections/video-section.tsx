@@ -66,9 +66,11 @@ const VideoSection = () => {
                           </div>
                           <div className="flex flex-col gap-1">
                             <span className="line-clamp-1">{video.title}</span>
-                            <span className="text-xs text-muted-foreground line-clamp-2">
-                              {video.description || "No description"}
-                            </span>
+                            <div className="max-w-72">
+                              <p className="w-full truncate text-xs text-muted-foreground ">
+                                {video.description || "No description"}
+                              </p>
+                            </div>
                           </div>
                         </div>
                       </TableCell>
