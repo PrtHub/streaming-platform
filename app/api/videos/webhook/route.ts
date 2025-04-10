@@ -146,6 +146,29 @@ export const POST = async (request: Request) => {
         });
       }
 
+      console.log("VIDEO DELETE WEBhook Trigger!");
+
+      const [video] = await db
+        .select({
+          thumbnailKey: videosTable.thumbnailKey,
+          previewKey: videosTable.previewKey,
+        })
+        .from(videosTable)
+        .where(eq(videosTable.muxUploadId, data.upload_id))
+        .limit(1);
+
+      if (video) {
+        const utapi = new UTApi();
+        const filesToDelete: string[] = [];
+
+        if (video.thumbnailKey) filesToDelete.push(video.thumbnailKey);
+        if (video.previewKey) filesToDelete.push(video.previewKey);
+
+        if (filesToDelete.length > 0) {
+          await utapi.deleteFiles(filesToDelete);
+        }
+      }
+
       await db
         .delete(videosTable)
         .where(eq(videosTable.muxUploadId, data.upload_id));

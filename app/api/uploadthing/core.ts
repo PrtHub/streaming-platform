@@ -75,7 +75,7 @@ export const ourFileRouter = {
       return {
         uploadedBy: metadata.user.id,
         videoId: metadata.videoId,
-        url: file.ufsUrl,
+        thumbnailUrl: file.ufsUrl,
       };
     }),
 } satisfies FileRouter;

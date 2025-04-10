@@ -459,11 +459,16 @@ Return only the title, no introductions or explanations.`,
       }
 
       const [video] = await db
-        .delete(videosTable)
+        .select({
+          thumbnailKey: videosTable.thumbnailKey,
+          previewKey: videosTable.previewKey,
+          muxAssetId: videosTable.muxAssetId,
+        })
+        .from(videosTable)
         .where(
           and(eq(videosTable.id, input.id), eq(videosTable.userId, userId))
         )
-        .returning();
+        .limit(1);
 
       if (!video) {
         throw new TRPCError({
@@ -471,6 +476,26 @@ Return only the title, no introductions or explanations.`,
           message: "Video not found",
         });
       }
+
+      const utapi = new UTApi();
+      const filesToDelete: string[] = [];
+
+      if (video.thumbnailKey) filesToDelete.push(video.thumbnailKey);
+      if (video.previewKey) filesToDelete.push(video.previewKey);
+
+      if (filesToDelete.length > 0) {
+        await utapi.deleteFiles(filesToDelete);
+      }
+
+      if (video.muxAssetId) {
+        await mux.video.assets.delete(video.muxAssetId);
+      }
+
+      await db
+        .delete(videosTable)
+        .where(
+          and(eq(videosTable.id, input.id), eq(videosTable.userId, userId))
+        );
 
       return video;
     }),
