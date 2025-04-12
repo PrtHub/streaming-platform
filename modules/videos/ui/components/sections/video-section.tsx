@@ -5,6 +5,8 @@ import { trpc } from "@/trpc/client";
 import React, { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import VideoPlayer from "../video-player";
+import VideoBanner from "../video-banner";
+import VideoTopRow from "../video-top-row";
 
 const VideoSection = ({ videoId }: { videoId: string }) => {
   const [video] = trpc.videos.getOne.useSuspenseQuery({ id: videoId });
@@ -25,6 +27,8 @@ const VideoSection = ({ videoId }: { videoId: string }) => {
               thumbnailUrl={video.thumbnailUrl}
             />
           </div>
+          <VideoBanner status={video.muxStatus} />
+          <VideoTopRow video={video} />
         </>
       </ErrorBoundary>
     </Suspense>
