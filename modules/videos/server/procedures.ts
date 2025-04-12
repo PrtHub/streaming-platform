@@ -1,14 +1,43 @@
 import { db } from "@/db";
-import { updateVideoSchema, videosTable } from "@/db/schema";
+import { updateVideoSchema, usersTable, videosTable } from "@/db/schema";
 import { geminiAI } from "@/lib/gemini";
 import { mux } from "@/lib/mux";
-import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
+import {
+  baseProcedure,
+  createTRPCRouter,
+  protectedProcedure,
+} from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
-import { and, eq } from "drizzle-orm";
+import { and, eq, getTableColumns } from "drizzle-orm";
 import { UTApi } from "uploadthing/server";
 import { z } from "zod";
 
 export const videosRouter = createTRPCRouter({
+  getOne: baseProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .query(async ({ input }) => {
+      const { id } = input;
+
+      const [existingVideo] = await db
+        .select({
+          ...getTableColumns(videosTable),
+          user: {
+            ...getTableColumns(usersTable),
+          },
+        })
+        .from(videosTable)
+        .innerJoin(usersTable, eq(videosTable.userId, usersTable.id))
+        .where(eq(videosTable.id, id));
+
+      if (!existingVideo) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Video not found",
+        });
+      }
+
+      return existingVideo;
+    }),
   generateAiThumbnail: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {

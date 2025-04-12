@@ -25,7 +25,10 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en">
-        <body className={`${roboto.variable} antialiased dark`}>
+        <body
+          className={`${roboto.variable} antialiased dark`}
+          suppressHydrationWarning
+        >
           <Toaster />
           <TRPCProvider>{children}</TRPCProvider>
         </body>
