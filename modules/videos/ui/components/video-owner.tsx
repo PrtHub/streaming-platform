@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import SubscriptionButton from "@/modules/subscriptions/ui/components/subscription-button";
+import UserInfo from "@/modules/users/ui/components/user-info";
 
 interface VideoOwnerProps {
   user: VideoGetOneOutput["user"];
@@ -29,7 +30,7 @@ const VideoOwner = ({ user, videoId }: VideoOwnerProps) => {
             </AvatarFallback>
           </Avatar>
           <article className="flex flex-col items-start gap-1">
-            <h1 className="font-semibold text-xl text-primary">{user.name}</h1>
+            <UserInfo name={user.name} />
             <span className="text-sm text-muted-foreground line-clamp-1">
               {0} Subscribers
             </span>

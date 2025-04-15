@@ -513,18 +513,36 @@ Return only the title, no introductions or explanations.`,
       if (video.previewKey) filesToDelete.push(video.previewKey);
 
       if (filesToDelete.length > 0) {
-        await utapi.deleteFiles(filesToDelete);
+        try {
+          console.log("Deleting files:", filesToDelete);
+          await utapi.deleteFiles(filesToDelete);
+        } catch (err) {
+          console.error("Failed to delete files (continuing anyway):", err);
+        }
       }
 
       if (video.muxAssetId) {
-        await mux.video.assets.delete(video.muxAssetId);
+        try {
+          console.log("Deleting mux asset:", video.muxAssetId);
+          await mux.video.assets.delete(video.muxAssetId);
+        } catch (err: unknown) {
+          console.error("Failed to delete mux asset (continuing anyway):", err);
+        }
       }
 
-      await db
-        .delete(videosTable)
-        .where(
-          and(eq(videosTable.id, input.id), eq(videosTable.userId, userId))
-        );
+      try {
+        await db
+          .delete(videosTable)
+          .where(
+            and(eq(videosTable.id, input.id), eq(videosTable.userId, userId))
+          );
+      } catch (err) {
+        console.error("Failed to delete video from DB:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to delete video from DB",
+        });
+      }
 
       return video;
     }),

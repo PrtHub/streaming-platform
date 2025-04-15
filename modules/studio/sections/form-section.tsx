@@ -79,6 +79,7 @@ const FormSection = ({ videoId }: { videoId: string }) => {
     },
     onError: (err) => {
       toast.error(err.message);
+      console.log(err);
     },
   });
 
