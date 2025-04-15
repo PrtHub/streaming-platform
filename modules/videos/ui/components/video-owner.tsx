@@ -29,8 +29,8 @@ const VideoOwner = ({ user, videoId }: VideoOwnerProps) => {
               {user.name?.charAt(0) || "U"}
             </AvatarFallback>
           </Avatar>
-          <article className="flex flex-col items-start gap-1">
-            <UserInfo name={user.name} />
+          <article className="flex flex-col items-start">
+            <UserInfo name={user.name} size={"lg"} />
             <span className="text-sm text-muted-foreground line-clamp-1">
               {0} Subscribers
             </span>
@@ -41,7 +41,7 @@ const VideoOwner = ({ user, videoId }: VideoOwnerProps) => {
         <Button
           size={"lg"}
           variant="default"
-          className="rounded-full text-lg py-6 font-semibold cursor-pointer"
+          className="rounded-full text-lg py-5 font-semibold cursor-pointer"
           asChild
         >
           <Link href={`/studio/videos/${videoId}`}>Edit Video</Link>

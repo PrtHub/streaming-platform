@@ -11,7 +11,7 @@ const userInfoVarients = cva("flex items-center gap-1", {
   variants: {
     size: {
       default: "[&_p]:text-sm [&_svg]:size-4",
-      lg: "[&_p]:text-base [&_svg]:size-5 [&_p]:font-medium [&_svg]:text-black",
+      lg: "[&_p]:text-base [&_svg]:size-5 [&_p]:font-semibold [&_svg]:text-black",
       sm: "[&_p]:text-xs [&_svg]:size-3.5",
     },
   },
@@ -30,7 +30,7 @@ const UserInfo = ({ name, className, size }: UserInfoProps) => {
     <div className={cn(userInfoVarients({ className, size }))}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <p className="">{name}</p>
+          <p className="truncate line-clamp-1">{name}</p>
         </TooltipTrigger>
         <TooltipContent>{name}</TooltipContent>
       </Tooltip>
