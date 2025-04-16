@@ -3,6 +3,7 @@ import {
   integer,
   pgEnum,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
@@ -29,6 +30,7 @@ export const usersTable = pgTable(
 
 export const usersRelations = relations(usersTable, ({ many }) => ({
   videos: many(videosTable),
+  videoViews: many(videoViews),
 }));
 
 export const categoriesTable = pgTable(
@@ -78,11 +80,7 @@ export const videosTable = pgTable("videos", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
-export const insertVideoSchema = createInsertSchema(videosTable);
-export const updateVideoSchema = createUpdateSchema(videosTable);
-export const selectVideoSchema = createSelectSchema(videosTable);
-
-export const videoRelations = relations(videosTable, ({ one }) => ({
+export const videoRelations = relations(videosTable, ({ one, many }) => ({
   user: one(usersTable, {
     fields: [videosTable.userId],
     references: [usersTable.id],
@@ -91,4 +89,44 @@ export const videoRelations = relations(videosTable, ({ one }) => ({
     fields: [videosTable.categoryId],
     references: [categoriesTable.id],
   }),
+  views: many(videoViews),
 }));
+
+export const insertVideoSchema = createInsertSchema(videosTable);
+export const updateVideoSchema = createUpdateSchema(videosTable);
+export const selectVideoSchema = createSelectSchema(videosTable);
+
+export const videoViews = pgTable(
+  "video_views",
+  {
+    videoId: uuid("video_id")
+      .notNull()
+      .references(() => videosTable.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => usersTable.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({
+      name: "video_views_pk",
+      columns: [table.videoId, table.userId],
+    }),
+  ]
+);
+
+export const videoViewsRelation = relations(videoViews, ({ one }) => ({
+  video: one(videosTable, {
+    fields: [videoViews.videoId],
+    references: [videosTable.id],
+  }),
+  user: one(usersTable, {
+    fields: [videoViews.userId],
+    references: [usersTable.id],
+  }),
+}));
+
+export const insertVideoViewSchema = createInsertSchema(videoViews);
+export const updateVideoViewSchema = createUpdateSchema(videoViews);
+export const selectVideoViewSchema = createSelectSchema(videoViews);
