@@ -16,14 +16,14 @@ const VideoTopRow = ({ video }: VideoTopRowProps) => {
   const compactViews = useMemo(() => {
     return Intl.NumberFormat("en", {
       notation: "compact",
-    }).format(2792932);
-  }, []);
+    }).format(video.viewsCount);
+  }, [video.viewsCount]);
 
   const extendedViews = useMemo(() => {
     return Intl.NumberFormat("en", {
       notation: "standard",
-    }).format(2792932);
-  }, []);
+    }).format(video.viewsCount);
+  }, [video.viewsCount]);
 
   const compactDate = formatRelativeTime(video.createdAt || new Date());
   const extendedDate = formatDateSimple(video.createdAt || new Date());

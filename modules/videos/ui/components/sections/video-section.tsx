@@ -7,9 +7,25 @@ import { ErrorBoundary } from "react-error-boundary";
 import VideoPlayer from "../video-player";
 import VideoBanner from "../video-banner";
 import VideoTopRow from "../video-top-row";
+import { useAuth } from "@clerk/nextjs";
 
 const VideoSection = ({ videoId }: { videoId: string }) => {
+  const { isSignedIn } = useAuth();
+  const utils = trpc.useUtils();
+
   const [video] = trpc.videos.getOne.useSuspenseQuery({ id: videoId });
+
+  const createView = trpc.videoViews.create.useMutation({
+    onSuccess: () => {
+      utils.videos.getOne.invalidate({ id: videoId });
+    },
+  });
+
+  const handlePlay = () => {
+    if (!isSignedIn) return;
+    createView.mutate({ videoId });
+  };
+
   return (
     <Suspense fallback={<p>Loading....</p>}>
       <ErrorBoundary fallback={<p>Something went wrong!</p>}>
@@ -22,7 +38,7 @@ const VideoSection = ({ videoId }: { videoId: string }) => {
           >
             <VideoPlayer
               autoPlay
-              onPlay={() => {}}
+              onPlay={handlePlay}
               playbackId={video.muxPlaybackId}
               thumbnailUrl={video.thumbnailUrl}
             />

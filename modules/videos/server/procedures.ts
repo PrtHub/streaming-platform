@@ -1,5 +1,10 @@
 import { db } from "@/db";
-import { updateVideoSchema, usersTable, videosTable } from "@/db/schema";
+import {
+  updateVideoSchema,
+  usersTable,
+  videosTable,
+  videoViews,
+} from "@/db/schema";
 import { geminiAI } from "@/lib/gemini";
 import { mux } from "@/lib/mux";
 import {
@@ -24,6 +29,10 @@ export const videosRouter = createTRPCRouter({
           user: {
             ...getTableColumns(usersTable),
           },
+          viewsCount: db.$count(
+            videoViews,
+            eq(videoViews.videoId, videosTable.id)
+          ),
         })
         .from(videosTable)
         .innerJoin(usersTable, eq(videosTable.userId, usersTable.id))
