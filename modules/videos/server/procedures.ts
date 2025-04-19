@@ -2,6 +2,7 @@ import { db } from "@/db";
 import {
   updateVideoSchema,
   usersTable,
+  videoReactions,
   videosTable,
   videoViews,
 } from "@/db/schema";
@@ -13,17 +14,45 @@ import {
   protectedProcedure,
 } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
-import { and, eq, getTableColumns } from "drizzle-orm";
+import { and, eq, getTableColumns, inArray } from "drizzle-orm";
 import { UTApi } from "uploadthing/server";
 import { z } from "zod";
 
 export const videosRouter = createTRPCRouter({
   getOne: baseProcedure
     .input(z.object({ id: z.string().uuid() }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       const { id } = input;
+      const { clerkUserId } = ctx;
+
+      let userId;
+
+      const [user] = await db
+        .select()
+        .from(usersTable)
+        .where(inArray(usersTable.clerkId, clerkUserId ? [clerkUserId] : []));
+
+      if (!user) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Please login!",
+        });
+      } else {
+        userId = user.id;
+      }
+
+      const viewerReaction = db.$with("viewer_reaction").as(
+        db
+          .select({
+            type: videoReactions.type,
+            videoId: videoReactions.videoId,
+          })
+          .from(videoReactions)
+          .where(inArray(videoReactions.userId, userId ? [userId] : []))
+      );
 
       const [existingVideo] = await db
+        .with(viewerReaction)
         .select({
           ...getTableColumns(videosTable),
           user: {
@@ -33,10 +62,27 @@ export const videosRouter = createTRPCRouter({
             videoViews,
             eq(videoViews.videoId, videosTable.id)
           ),
+          likesCount: db.$count(
+            videoReactions,
+            and(
+              eq(videoReactions.videoId, videosTable.id),
+              eq(videoReactions.type, "like")
+            )
+          ),
+          dislikesCount: db.$count(
+            videoReactions,
+            and(
+              eq(videoReactions.videoId, videosTable.id),
+              eq(videoReactions.type, "dislike")
+            )
+          ),
+          viewerReaction: viewerReaction.type,
         })
         .from(videosTable)
         .innerJoin(usersTable, eq(videosTable.userId, usersTable.id))
+        .leftJoin(viewerReaction, eq(viewerReaction.videoId, videosTable.id))
         .where(eq(videosTable.id, id));
+      // .groupBy(videosTable.id, usersTable.id, viewerReaction.type);
 
       if (!existingVideo) {
         throw new TRPCError({

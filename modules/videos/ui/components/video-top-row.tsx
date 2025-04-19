@@ -34,7 +34,12 @@ const VideoTopRow = ({ video }: VideoTopRowProps) => {
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <VideoOwner user={video.user} videoId={video.id} />
         <section className="flex overflow-x-auto sm:overflow-visible sm:justify-end  sm:min-h-[calc(50% - 6px)] pb-2 sm:pb-0 -mb-2 sm:mb-0  gap-2">
-          <VideoReactions />
+          <VideoReactions
+            videoId={video.id}
+            likes={video.likesCount}
+            dislikes={video.dislikesCount}
+            viewerReactions={video.viewerReaction}
+          />
           <div className="sm:mt-2">
             <VideoMenu videoId={video.id} />
           </div>

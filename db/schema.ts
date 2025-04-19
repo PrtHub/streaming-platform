@@ -31,6 +31,7 @@ export const usersTable = pgTable(
 export const usersRelations = relations(usersTable, ({ many }) => ({
   videos: many(videosTable),
   videoViews: many(videoViews),
+  reactions: many(videoReactions),
 }));
 
 export const categoriesTable = pgTable(
@@ -90,6 +91,7 @@ export const videoRelations = relations(videosTable, ({ one, many }) => ({
     references: [categoriesTable.id],
   }),
   views: many(videoViews),
+  reactions: many(videoReactions),
 }));
 
 export const insertVideoSchema = createInsertSchema(videosTable);
@@ -130,3 +132,41 @@ export const videoViewsRelation = relations(videoViews, ({ one }) => ({
 export const insertVideoViewSchema = createInsertSchema(videoViews);
 export const updateVideoViewSchema = createUpdateSchema(videoViews);
 export const selectVideoViewSchema = createSelectSchema(videoViews);
+
+export const reactionType = pgEnum("reaction_type", ["like", "dislike"]);
+
+export const videoReactions = pgTable(
+  "video_reactions",
+  {
+    videoId: uuid("video_id")
+      .notNull()
+      .references(() => videosTable.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => usersTable.id, { onDelete: "cascade" }),
+    type: reactionType("type").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({
+      name: "video_reactions_pk",
+      columns: [table.videoId, table.userId],
+    }),
+  ]
+);
+
+export const videoReactionsRelation = relations(videoReactions, ({ one }) => ({
+  video: one(videosTable, {
+    fields: [videoReactions.videoId],
+    references: [videosTable.id],
+  }),
+  user: one(usersTable, {
+    fields: [videoReactions.userId],
+    references: [usersTable.id],
+  }),
+}));
+
+export const insertVideoReactionSchema = createInsertSchema(videoReactions);
+export const updateVideoReactionSchema = createUpdateSchema(videoReactions);
+export const selectVideoReactionSchema = createSelectSchema(videoReactions);
