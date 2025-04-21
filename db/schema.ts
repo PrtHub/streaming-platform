@@ -166,6 +166,10 @@ export const commentRelation = relations(commentTable, ({ one }) => ({
   }),
 }));
 
+export const insertCommentSchema = createInsertSchema(commentTable);
+export const updateCommentSchema = createUpdateSchema(commentTable);
+export const selectCommentSchema = createSelectSchema(commentTable);
+
 export const videoViews = pgTable(
   "video_views",
   {

@@ -15,7 +15,7 @@ const VideoView = ({ videoId }: VideoViewProps) => {
           <div className="xl:hidden block  mt-4">
             <VideoSuggestions />
           </div>
-          <CommentsSection />
+          <CommentsSection videoId={videoId} />
         </section>
         <section className="xl:block hidden w-full xl:w-[380px] 2xl:w-[460px] shrink ">
           <VideoSuggestions />
