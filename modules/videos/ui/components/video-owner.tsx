@@ -15,7 +15,7 @@ interface VideoOwnerProps {
 }
 
 const VideoOwner = ({ user, videoId }: VideoOwnerProps) => {
-  const { userId: clerkUserId } = useAuth();
+  const { userId: clerkUserId, isLoaded } = useAuth();
 
   const { isPending, onClick } = useSubscriptions({
     userId: user.id,
@@ -53,7 +53,7 @@ const VideoOwner = ({ user, videoId }: VideoOwnerProps) => {
       ) : (
         <SubscriptionButton
           isSubscribed={user.viewerSubscribed}
-          disable={isPending}
+          disable={isPending || !isLoaded}
           onClick={onClick}
         />
       )}
