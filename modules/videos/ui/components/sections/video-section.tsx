@@ -8,6 +8,7 @@ import VideoPlayer from "../video-player";
 import VideoBanner from "../video-banner";
 import VideoTopRow from "../video-top-row";
 import { useAuth } from "@clerk/nextjs";
+import VideoSectionSkeleton from "../skeletons/video-section-skeleton";
 
 const VideoSection = ({ videoId }: { videoId: string }) => {
   const { isSignedIn } = useAuth();
@@ -27,7 +28,7 @@ const VideoSection = ({ videoId }: { videoId: string }) => {
   };
 
   return (
-    <Suspense fallback={<p>Loading....</p>}>
+    <Suspense fallback={<VideoSectionSkeleton />}>
       <ErrorBoundary fallback={<p>Something went wrong!</p>}>
         <>
           <div
