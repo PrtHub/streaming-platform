@@ -38,6 +38,7 @@ export const usersRelations = relations(usersTable, ({ many }) => ({
   subscribers: many(subscriptionTable, {
     relationName: "subscriptions_creator_id_key",
   }),
+  comments: many(commentTable),
 }));
 
 export const subscriptionTable = pgTable(
@@ -63,12 +64,12 @@ export const subscriptionTable = pgTable(
 export const subscriptionsRelations = relations(
   subscriptionTable,
   ({ one }) => ({
-    viewerId: one(usersTable, {
+    viewer: one(usersTable, {
       fields: [subscriptionTable.viewerId],
       references: [usersTable.id],
       relationName: "subscriptions_viewer_id_key",
     }),
-    creatorId: one(usersTable, {
+    creator: one(usersTable, {
       fields: [subscriptionTable.creatorId],
       references: [usersTable.id],
       relationName: "subscriptions_creator_id_key",
@@ -134,11 +135,36 @@ export const videoRelations = relations(videosTable, ({ one, many }) => ({
   }),
   views: many(videoViews),
   reactions: many(videoReactions),
+  comments: many(commentTable),
 }));
 
 export const insertVideoSchema = createInsertSchema(videosTable);
 export const updateVideoSchema = createUpdateSchema(videosTable);
 export const selectVideoSchema = createSelectSchema(videosTable);
+
+export const commentTable = pgTable("comments", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  videoId: uuid("video_id")
+    .notNull()
+    .references(() => videosTable.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => usersTable.id, { onDelete: "cascade" }),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const commentRelation = relations(commentTable, ({ one }) => ({
+  user: one(usersTable, {
+    fields: [commentTable.userId],
+    references: [usersTable.id],
+  }),
+  video: one(videosTable, {
+    fields: [commentTable.videoId],
+    references: [videosTable.id],
+  }),
+}));
 
 export const videoViews = pgTable(
   "video_views",
