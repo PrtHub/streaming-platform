@@ -26,7 +26,7 @@ const CommentsSection = ({ videoId }: CommentsSectionProps) => {
         <div className="mt-6">
           <section className="flex flex-col gap-y-6">
             <h1 className="font-semibold">
-              {comments.pages.flatMap((page) => page.items).length} Comments
+              {comments.pages[0]?.totalCount ?? 0} Comments
             </h1>
             <CommentForm videoId={videoId} />
             <div className="mt-2 flex flex-col gap-6">
@@ -37,7 +37,6 @@ const CommentsSection = ({ videoId }: CommentsSectionProps) => {
                     <CommentItem key={comment.id} comment={comment} />
                   ))}
               <InfiniteScroll
-                isManual
                 hasNextPage={query.hasNextPage}
                 isFetchingNextPage={query.isFetchingNextPage}
                 fetchNextPage={query.fetchNextPage}
