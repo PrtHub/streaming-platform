@@ -7,6 +7,7 @@ import CommentItem from "@/modules/comments/ui/components/comment-item";
 import { trpc } from "@/trpc/client";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
+import CommentSectionSkeleton from "../skeletons/comment-section-skeleton";
 
 interface CommentsSectionProps {
   videoId: string;
@@ -21,7 +22,7 @@ const CommentsSection = ({ videoId }: CommentsSectionProps) => {
   );
 
   return (
-    <Suspense fallback={<>Loading...</>}>
+    <Suspense fallback={<CommentSectionSkeleton />}>
       <ErrorBoundary fallback={<>Something Went Wrong</>}>
         <div className="mt-6">
           <section className="flex flex-col gap-y-6">
