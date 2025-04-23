@@ -47,29 +47,37 @@ export const commentsRouter = createTRPCRouter({
     .query(async ({ input }) => {
       const { videoId, cursor, limit } = input;
 
-      const comments = await db
-        .select({
-          ...getTableColumns(commentTable),
-          user: usersTable,
-        })
-        .from(commentTable)
-        .where(
-          and(
-            eq(commentTable.videoId, videoId),
-            cursor
-              ? or(
-                  lt(commentTable.updatedAt, cursor.updatedAt),
-                  and(
-                    eq(commentTable.updatedAt, cursor.updatedAt),
-                    lt(commentTable.id, cursor.id)
-                  )
-                )
-              : undefined
-          )
-        )
-        .innerJoin(usersTable, eq(commentTable.userId, usersTable.id))
-        .orderBy(desc(commentTable.updatedAt), desc(commentTable.id))
-        .limit(limit + 1);
+      const [comments, [{ count: totalCount } = { count: 0 }]] =
+        await Promise.all([
+          db
+            .select({
+              ...getTableColumns(commentTable),
+              user: usersTable,
+            })
+            .from(commentTable)
+            .where(
+              and(
+                eq(commentTable.videoId, videoId),
+                cursor
+                  ? or(
+                      lt(commentTable.updatedAt, cursor.updatedAt),
+                      and(
+                        eq(commentTable.updatedAt, cursor.updatedAt),
+                        lt(commentTable.id, cursor.id)
+                      )
+                    )
+                  : undefined
+              )
+            )
+            .innerJoin(usersTable, eq(commentTable.userId, usersTable.id))
+            .orderBy(desc(commentTable.updatedAt), desc(commentTable.id))
+            .limit(limit + 1),
+
+          db
+            .select({ count: count() })
+            .from(commentTable)
+            .where(eq(commentTable.videoId, videoId)),
+        ]);
 
       const hasMore = comments.length > limit;
 
@@ -83,12 +91,6 @@ export const commentsRouter = createTRPCRouter({
             updatedAt: lastItem.updatedAt,
           }
         : null;
-
-      // Get the total count of comments for this video
-      const [{ count: totalCount } = { count: 0 }] = await db
-        .select({ count: count() })
-        .from(commentTable)
-        .where(eq(commentTable.videoId, videoId));
 
       return {
         items,
