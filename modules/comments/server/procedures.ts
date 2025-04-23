@@ -5,7 +5,7 @@ import {
   createTRPCRouter,
   protectedProcedure,
 } from "@/trpc/init";
-import { and, eq, getTableColumns } from "drizzle-orm";
+import { and, desc, eq, getTableColumns, lt, or } from "drizzle-orm";
 import { z } from "zod";
 
 export const commentsRouter = createTRPCRouter({
@@ -35,10 +35,17 @@ export const commentsRouter = createTRPCRouter({
     .input(
       z.object({
         videoId: z.string().uuid(),
+        cursor: z
+          .object({
+            id: z.string().uuid(),
+            updatedAt: z.date(),
+          })
+          .nullish(),
+        limit: z.number().min(1).max(100),
       })
     )
     .query(async ({ input }) => {
-      const { videoId } = input;
+      const { videoId, cursor, limit } = input;
 
       const comments = await db
         .select({
@@ -46,10 +53,41 @@ export const commentsRouter = createTRPCRouter({
           user: usersTable,
         })
         .from(commentTable)
-        .where(eq(commentTable.videoId, videoId))
-        .innerJoin(usersTable, eq(commentTable.userId, usersTable.id));
+        .where(
+          and(
+            eq(commentTable.videoId, videoId),
+            cursor
+              ? or(
+                  lt(commentTable.updatedAt, cursor.updatedAt),
+                  and(
+                    eq(commentTable.updatedAt, cursor.updatedAt),
+                    lt(commentTable.id, cursor.id)
+                  )
+                )
+              : undefined
+          )
+        )
+        .innerJoin(usersTable, eq(commentTable.userId, usersTable.id))
+        .orderBy(desc(commentTable.updatedAt), desc(commentTable.id))
+        .limit(limit + 1);
 
-      return comments;
+      const hasMore = comments.length > limit;
+
+      const items = hasMore ? comments.slice(0, -1) : comments;
+
+      const lastItem = items[items.length - 1];
+
+      const newCursor = hasMore
+        ? {
+            id: lastItem.id,
+            updatedAt: lastItem.updatedAt,
+          }
+        : null;
+
+      return {
+        items,
+        nextCursor: newCursor,
+      };
     }),
   remove: protectedProcedure
     .input(
