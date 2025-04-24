@@ -193,7 +193,7 @@ const FormSection = ({ videoId }: { videoId: string }) => {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-full">
                     <DropdownMenuItem
-                      className="w-fit cursor-pointer"
+                      className="w-full cursor-pointer"
                       onClick={() => deleteVideo.mutate({ id: videoId })}
                     >
                       {" "}

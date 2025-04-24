@@ -15,6 +15,8 @@ import {
   createSelectSchema,
 } from "drizzle-zod";
 
+export const reactionType = pgEnum("reaction_type", ["like", "dislike"]);
+
 export const usersTable = pgTable(
   "users",
   {
@@ -39,6 +41,7 @@ export const usersRelations = relations(usersTable, ({ many }) => ({
     relationName: "subscriptions_creator_id_key",
   }),
   comments: many(commentTable),
+  commentReactions: many(commentReactions),
 }));
 
 export const subscriptionTable = pgTable(
@@ -155,7 +158,7 @@ export const commentTable = pgTable("comments", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
-export const commentRelation = relations(commentTable, ({ one }) => ({
+export const commentRelation = relations(commentTable, ({ one, many }) => ({
   user: one(usersTable, {
     fields: [commentTable.userId],
     references: [usersTable.id],
@@ -164,11 +167,51 @@ export const commentRelation = relations(commentTable, ({ one }) => ({
     fields: [commentTable.videoId],
     references: [videosTable.id],
   }),
+  reactions: many(commentReactions),
 }));
 
 export const insertCommentSchema = createInsertSchema(commentTable);
 export const updateCommentSchema = createUpdateSchema(commentTable);
 export const selectCommentSchema = createSelectSchema(commentTable);
+
+export const commentReactions = pgTable(
+  "comment_reactions",
+  {
+    commentId: uuid("comment_id")
+      .notNull()
+      .references(() => commentTable.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => usersTable.id, { onDelete: "cascade" }),
+    reactionType: reactionType("reaction_type").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({
+      name: "comment_reactions_pk",
+      columns: [table.commentId, table.userId],
+    }),
+  ]
+);
+
+export const commentReactionsRelation = relations(
+  commentReactions,
+  ({ one }) => ({
+    comment: one(commentTable, {
+      fields: [commentReactions.commentId],
+      references: [commentTable.id],
+    }),
+    user: one(usersTable, {
+      fields: [commentReactions.userId],
+      references: [usersTable.id],
+    }),
+  })
+);
+
+export const insertCommentReactionSchema = createInsertSchema(commentReactions);
+export const updateCommentReactionSchema = createUpdateSchema(commentReactions);
+export const selectCommentReactionSchema = createSelectSchema(commentReactions);
 
 export const videoViews = pgTable(
   "video_views",
@@ -204,8 +247,6 @@ export const videoViewsRelation = relations(videoViews, ({ one }) => ({
 export const insertVideoViewSchema = createInsertSchema(videoViews);
 export const updateVideoViewSchema = createUpdateSchema(videoViews);
 export const selectVideoViewSchema = createSelectSchema(videoViews);
-
-export const reactionType = pgEnum("reaction_type", ["like", "dislike"]);
 
 export const videoReactions = pgTable(
   "video_reactions",
