@@ -33,12 +33,7 @@ export const videosRouter = createTRPCRouter({
         .from(usersTable)
         .where(inArray(usersTable.clerkId, clerkUserId ? [clerkUserId] : []));
 
-      if (!user) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Please login!",
-        });
-      } else {
+      if (user) {
         userId = user.id;
       }
 
