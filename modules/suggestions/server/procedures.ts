@@ -1,8 +1,13 @@
 import { z } from "zod";
-import { and, desc, eq, lt, or } from "drizzle-orm";
+import { and, desc, eq, getTableColumns, lt, or } from "drizzle-orm";
 
 import { db } from "@/db";
-import { videosTable } from "@/db/schema";
+import {
+  usersTable,
+  videoReactions,
+  videosTable,
+  videoViews,
+} from "@/db/schema";
 import { baseProcedure, createTRPCRouter } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
 
@@ -37,7 +42,28 @@ export const suggestionsRouter = createTRPCRouter({
       }
 
       const data = await db
-        .select()
+        .select({
+          ...getTableColumns(videosTable),
+          user: usersTable,
+          viewsCount: db.$count(
+            videoViews,
+            eq(videoViews.videoId, videosTable.id)
+          ),
+          likesCount: db.$count(
+            videoReactions,
+            and(
+              eq(videoReactions.videoId, videosTable.id),
+              eq(videoReactions.type, "like")
+            )
+          ),
+          dislikesCount: db.$count(
+            videoReactions,
+            and(
+              eq(videoReactions.videoId, videosTable.id),
+              eq(videoReactions.type, "dislike")
+            )
+          ),
+        })
         .from(videosTable)
         .where(
           and(
@@ -55,6 +81,7 @@ export const suggestionsRouter = createTRPCRouter({
               : undefined
           )
         )
+        .innerJoin(usersTable, eq(usersTable.id, videosTable.userId))
         .orderBy(desc(videosTable.updatedAt), desc(videosTable.id))
         .limit(limit + 1);
 
