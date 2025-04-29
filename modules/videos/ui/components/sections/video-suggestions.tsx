@@ -2,6 +2,7 @@
 
 import { DEFAULT_LIMIT } from "@/constants";
 import { trpc } from "@/trpc/client";
+import VideoRowCard from "../video-row-card";
 
 interface VideoSuggestionsProps {
   videoId: string;
@@ -19,7 +20,11 @@ const VideoSuggestions = ({ videoId }: VideoSuggestionsProps) => {
   );
   return (
     <section>
-      <div>{JSON.stringify(suggestions)}</div>
+      {suggestions.pages
+        .flatMap((page) => page.items)
+        .map((video) => (
+          <VideoRowCard key={video.id} data={video} size="compact" />
+        ))}
     </section>
   );
 };
