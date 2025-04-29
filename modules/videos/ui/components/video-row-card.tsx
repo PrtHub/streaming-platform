@@ -83,17 +83,17 @@ const VideoRowCard = ({ data, size, onRemove }: VideoRowCardProps) => {
               {data.title}
             </h3>
             {size === "default" && (
-              <p className="line-clamp-1 text-sm text-muted-foreground mt-1">
+              <p className="line-clamp-1 text-xs text-muted-foreground mt-1">
                 {formatViews} views &bull; {formatRelativeTime(data.createdAt)}
               </p>
             )}
             {size === "default" && (
               <>
-                <div className="flex items-center gap-x-2 my-3">
+                <div className="flex items-center gap-x-2 my-2">
                   <UserAvatar
                     image={data.user.imageUrl}
                     alt={data.user.name}
-                    className="size-10"
+                    className="size-8"
                   />
                   <UserInfo name={data.user.name} size={"sm"} />
                 </div>
@@ -103,11 +103,7 @@ const VideoRowCard = ({ data, size, onRemove }: VideoRowCardProps) => {
                       {data.description || "No description"}
                     </p>
                   </TooltipTrigger>
-                  <TooltipContent
-                    side="bottom"
-                    align="center"
-                    className="bg-black/50 text-white"
-                  >
+                  <TooltipContent side="bottom" align="center">
                     From the video description
                   </TooltipContent>
                 </Tooltip>
