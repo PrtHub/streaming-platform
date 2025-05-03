@@ -145,8 +145,8 @@ const FilterCarousel = ({
               </CarouselItem>
             ))}
         </CarouselContent>
-        <CarouselPrevious className="left-0 z-20 size-7" />
-        <CarouselNext className="right-0 z-20 size-7" />
+        <CarouselPrevious className="left-0 z-20 size-7 cursor-pointer" />
+        <CarouselNext className="right-0 z-20 size-7 cursor-pointer" />
       </Carousel>
 
       {/* Right fade effect - only show when can scroll next */}
