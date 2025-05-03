@@ -142,16 +142,6 @@ const FormSection = ({ videoId }: { videoId: string }) => {
     },
   });
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      revalidate.mutate({ id: videoId });
-    }, 5000);
-
-    return () => {
-      clearTimeout(timer);
-    };
-  }, []);
-
   const form = useForm<z.infer<typeof updateVideoSchema>>({
     resolver: zodResolver(updateVideoSchema),
     defaultValues: video,

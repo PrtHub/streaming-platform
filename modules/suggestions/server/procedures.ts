@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { and, desc, eq, getTableColumns, lt, or } from "drizzle-orm";
+import { and, desc, eq, getTableColumns, lt, not, or } from "drizzle-orm";
 
 import { db } from "@/db";
 import {
@@ -67,6 +67,8 @@ export const suggestionsRouter = createTRPCRouter({
         .from(videosTable)
         .where(
           and(
+            not(eq(videosTable.id, existingVideo.id)),
+            eq(videosTable.visibility, "public"),
             existingVideo.categoryId
               ? eq(videosTable.categoryId, existingVideo.categoryId)
               : undefined,
