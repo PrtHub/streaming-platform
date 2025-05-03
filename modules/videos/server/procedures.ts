@@ -687,4 +687,68 @@ Return only the title, no introductions or explanations.`,
       url: upload.url,
     };
   }),
+  revalidate: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const { id: userId } = ctx.user;
+      const { id: videoId } = input;
+
+      const [existingVideo] = await db
+        .select()
+        .from(videosTable)
+        .where(and(eq(videosTable.id, videoId), eq(videosTable.userId, userId)))
+        .limit(1);
+
+      if (!existingVideo) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Video not found",
+        });
+      }
+
+      if (!existingVideo.muxUploadId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Video upload ID not found",
+        });
+      }
+
+      const directUpload = await mux.video.uploads.retrieve(
+        existingVideo.muxUploadId
+      );
+
+      if (!directUpload || !directUpload.asset_id) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Video upload not found",
+        });
+      }
+
+      const asset = await mux.video.assets.retrieve(directUpload.asset_id);
+
+      if (!asset) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Video asset not found",
+        });
+      }
+
+      const duration = asset.duration ? Math.round(asset.duration * 1000) : 0;
+
+      const [updatedVideo] = await db
+        .update(videosTable)
+        .set({
+          muxAssetId: asset.id,
+          muxStatus: asset.status,
+          muxPlaybackId: asset?.playback_ids?.[0].id,
+          muxTrackId: asset?.tracks?.[0].id,
+          muxTrackStatus: asset?.tracks?.[0].status,
+          duration,
+          updatedAt: new Date(),
+        })
+        .where(and(eq(videosTable.id, videoId), eq(videosTable.userId, userId)))
+        .returning();
+
+      return updatedVideo;
+    }),
 });

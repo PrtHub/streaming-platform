@@ -18,6 +18,7 @@ import {
   LockIcon,
   MoreVerticalIcon,
   RefreshCw,
+  RefreshCwIcon,
   SparklesIcon,
   Trash2Icon,
 } from "lucide-react";
@@ -130,6 +131,27 @@ const FormSection = ({ videoId }: { videoId: string }) => {
     },
   });
 
+  const revalidate = trpc.videos.revalidate.useMutation({
+    onSuccess: async () => {
+      utils.studio.getMany.invalidate();
+      utils.studio.getOne.invalidate({ id: videoId });
+      toast.success("Video revalidated!");
+    },
+    onError: (err) => {
+      toast.error(err.message);
+    },
+  });
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      revalidate.mutate({ id: videoId });
+    }, 5000);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, []);
+
   const form = useForm<z.infer<typeof updateVideoSchema>>({
     resolver: zodResolver(updateVideoSchema),
     defaultValues: video,
@@ -192,6 +214,13 @@ const FormSection = ({ videoId }: { videoId: string }) => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-full">
+                    <DropdownMenuItem
+                      className="w-full cursor-pointer"
+                      onClick={() => revalidate.mutate({ id: videoId })}
+                    >
+                      {" "}
+                      <RefreshCwIcon className="w-4 h-4" /> Revalidate
+                    </DropdownMenuItem>
                     <DropdownMenuItem
                       className="w-full cursor-pointer"
                       onClick={() => deleteVideo.mutate({ id: videoId })}
