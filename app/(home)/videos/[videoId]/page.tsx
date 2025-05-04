@@ -3,6 +3,8 @@ import { HydrateClient, trpc } from "@/trpc/server";
 import VideoView from "@/modules/videos/ui/components/views/video-view";
 import { DEFAULT_LIMIT } from "@/constants";
 
+export const dynamic = "force-dynamic";
+
 interface VideoIdPageProps {
   params: Promise<{
     videoId: string;

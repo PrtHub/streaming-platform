@@ -1,5 +1,8 @@
 "use client";
 
+import { Suspense } from "react";
+import { ErrorBoundary } from "react-error-boundary";
+
 import { InfiniteScroll } from "@/components/infinite-scroll";
 import { DEFAULT_LIMIT } from "@/constants";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -26,34 +29,36 @@ const ResultsSection = ({ query, categoryId }: ResultsSectionProps) => {
   );
 
   return (
-    <>
-      {isMobile ? (
-        <div className="flex flex-col gap-x-4 gap-y-8">
-          {result.pages
-            .flatMap((pages) => pages.items)
-            .map((video) => (
-              <div key={video.id}>
-                <VideoGridCard key={video.id} data={video} />
-              </div>
-            ))}
-        </div>
-      ) : (
-        <div className="flex flex-col gap-x-4 gap-y-8">
-          {result.pages
-            .flatMap((pages) => pages.items)
-            .map((video) => (
-              <div key={video.id}>
-                <VideoRowCard key={video.id} data={video} size="default" />
-              </div>
-            ))}
-        </div>
-      )}
-      <InfiniteScroll
-        hasNextPage={resultQuery.hasNextPage}
-        fetchNextPage={resultQuery.fetchNextPage}
-        isFetchingNextPage={resultQuery.isFetchingNextPage}
-      />
-    </>
+    <Suspense key={`${query}-${categoryId}`} fallback={<div>Loading...</div>}>
+      <ErrorBoundary fallback={<div>Something went wrong</div>}>
+        {isMobile ? (
+          <div className="flex flex-col gap-x-4 gap-y-8">
+            {result.pages
+              .flatMap((pages) => pages.items)
+              .map((video) => (
+                <div key={video.id}>
+                  <VideoGridCard key={video.id} data={video} />
+                </div>
+              ))}
+          </div>
+        ) : (
+          <div className="flex flex-col gap-x-4 gap-y-8">
+            {result.pages
+              .flatMap((pages) => pages.items)
+              .map((video) => (
+                <div key={video.id}>
+                  <VideoRowCard key={video.id} data={video} size="default" />
+                </div>
+              ))}
+          </div>
+        )}
+        <InfiniteScroll
+          hasNextPage={resultQuery.hasNextPage}
+          fetchNextPage={resultQuery.fetchNextPage}
+          isFetchingNextPage={resultQuery.isFetchingNextPage}
+        />
+      </ErrorBoundary>
+    </Suspense>
   );
 };
 

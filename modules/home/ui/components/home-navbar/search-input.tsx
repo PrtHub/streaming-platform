@@ -2,12 +2,17 @@
 
 import { cn } from "@/lib/utils";
 import { Search, X } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState } from "react";
 
 export const SearchInput = () => {
   const router = useRouter();
-  const [query, setQuery] = useState("");
+  const searchParams = useSearchParams();
+
+  const value = searchParams.get("query") || "";
+  const categoryId = searchParams.get("categoryId") || "";
+
+  const [query, setQuery] = useState(value);
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -19,6 +24,10 @@ export const SearchInput = () => {
     const newQuery = query.trim();
 
     url.searchParams.set("query", newQuery);
+
+    if (categoryId) {
+      url.searchParams.set("categoryId", categoryId);
+    }
 
     if (newQuery === "") {
       url.searchParams.delete("query");
