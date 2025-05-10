@@ -2,11 +2,42 @@ import { z } from "zod";
 
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { db } from "@/db";
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq, getTableColumns } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
-import { subscriptionTable } from "@/db/schema";
+import { subscriptionTable, usersTable } from "@/db/schema";
 
 export const subscriptionsRouter = createTRPCRouter({
+  // getManySubscribedCreators: protectedProcedure.query(async ({ ctx }) => {
+  //   const { id: userId } = ctx.user;
+
+  //   if (!userId) {
+  //     throw new TRPCError({
+  //       code: "UNAUTHORIZED",
+  //       message: "User not authenticated",
+  //     });
+  //   }
+
+  //   const subscribedCreators = await db
+  //     .select({
+  //       ...getTableColumns(usersTable),
+  //       subscribedAt: subscriptionTable.createdAt,
+  //       subscriberCount: db.$count(
+  //         subscriptionTable,
+  //         eq(subscriptionTable.creatorId, usersTable.id)
+  //       ),
+  //     })
+  //     .from(usersTable)
+  //     .innerJoin(
+  //       subscriptionTable,
+  //       and(
+  //         eq(subscriptionTable.creatorId, usersTable.id),
+  //         eq(subscriptionTable.viewerId, userId)
+  //       )
+  //     )
+  //     .orderBy(desc(subscriptionTable.createdAt));
+
+  //   return subscribedCreators;
+  // }),
   create: protectedProcedure
     .input(
       z.object({

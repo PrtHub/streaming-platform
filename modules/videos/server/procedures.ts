@@ -29,6 +29,95 @@ import { UTApi } from "uploadthing/server";
 import { z } from "zod";
 
 export const videosRouter = createTRPCRouter({
+  getManySubscriptions: protectedProcedure
+    .input(
+      z.object({
+        cursor: z
+          .object({
+            id: z.string().uuid(),
+            updatedAt: z.date(),
+          })
+          .nullish(),
+        limit: z.number().min(1).max(100),
+      })
+    )
+    .query(async ({ input, ctx }) => {
+      const { id: userId } = ctx.user;
+      const { cursor, limit } = input;
+
+      if (!userId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User not authenticated",
+        });
+      }
+
+      const viewerSubscription = db.$with("viewer_subscription").as(
+        db
+          .select({
+            userId: subscriptionTable.creatorId,
+          })
+          .from(subscriptionTable)
+          .where(eq(subscriptionTable.viewerId, userId))
+      );
+
+      const data = await db
+        .with(viewerSubscription)
+        .select({
+          ...getTableColumns(videosTable),
+          user: usersTable,
+          viewsCount: db.$count(
+            videoViews,
+            eq(videoViews.videoId, videosTable.id)
+          ),
+          likesCount: db.$count(
+            videoReactions,
+            and(
+              eq(videoReactions.videoId, videosTable.id),
+              eq(videoReactions.type, "like")
+            )
+          ),
+          dislikesCount: db.$count(
+            videoReactions,
+            and(
+              eq(videoReactions.videoId, videosTable.id),
+              eq(videoReactions.type, "dislike")
+            )
+          ),
+        })
+        .from(videosTable)
+        .innerJoin(usersTable, eq(videosTable.userId, usersTable.id))
+        .innerJoin(
+          viewerSubscription,
+          eq(viewerSubscription.userId, usersTable.id)
+        )
+        .where(
+          and(
+            cursor
+              ? or(
+                  lt(videosTable.updatedAt, cursor.updatedAt),
+                  and(
+                    eq(videosTable.updatedAt, cursor.updatedAt),
+                    lt(videosTable.id, cursor.id)
+                  )
+                )
+              : undefined,
+            eq(videosTable.visibility, "public")
+          )
+        )
+        .orderBy(desc(videosTable.updatedAt), desc(videosTable.id))
+        .limit(limit + 1);
+
+      const hasMore = data.length > limit;
+      const items = hasMore ? data.slice(0, -1) : data;
+
+      const lastItem = items[items.length - 1];
+      const nextCursor = hasMore
+        ? { id: lastItem.id, updatedAt: lastItem.updatedAt }
+        : null;
+
+      return { items, nextCursor };
+    }),
   getManyTrending: baseProcedure
     .input(
       z.object({
