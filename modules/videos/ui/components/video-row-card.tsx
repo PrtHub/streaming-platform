@@ -110,8 +110,15 @@ const VideoRowCard = ({ data, size, onRemove }: VideoRowCardProps) => {
               </>
             )}
             {size === "compact" && (
-              <div className="mt-1 text-muted-foreground">
-                <UserInfo name={data.user.name} size="sm" />
+              <div className="flex items-center gap-x-2 mt-1">
+                <UserAvatar
+                  image={data.user.imageUrl}
+                  alt={data.user.name}
+                  className="size-6"
+                />
+                <div className="text-muted-foreground">
+                  <UserInfo name={data.user.name} size="sm" />
+                </div>
               </div>
             )}
             {size === "compact" && (
