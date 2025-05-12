@@ -24,7 +24,7 @@ const items = [
   },
   {
     title: "Liked videos",
-    href: "/playlist?list=LL",
+    href: "/liked",
     icon: <ThumbsUp className="size-5" />,
     auth: true,
   },

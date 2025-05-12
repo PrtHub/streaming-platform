@@ -9,16 +9,15 @@ import VideoGridCard from "@/modules/videos/ui/components/video-grid-card";
 import { trpc } from "@/trpc/client";
 import VideoRowCard from "@/modules/videos/ui/components/video-row-card";
 
-const HistoryVideosSection = () => {
-  const [videos, query] =
-    trpc.playlists.getManyHistory.useSuspenseInfiniteQuery(
-      {
-        limit: DEFAULT_LIMIT,
-      },
-      {
-        getNextPageParam: (lastPage) => lastPage.nextCursor,
-      }
-    );
+const LikedVideosSection = () => {
+  const [videos, query] = trpc.playlists.getManyLiked.useSuspenseInfiniteQuery(
+    {
+      limit: DEFAULT_LIMIT,
+    },
+    {
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
+    }
+  );
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
@@ -49,4 +48,4 @@ const HistoryVideosSection = () => {
   );
 };
 
-export default HistoryVideosSection;
+export default LikedVideosSection;
