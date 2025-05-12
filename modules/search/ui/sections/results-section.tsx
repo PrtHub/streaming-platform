@@ -3,9 +3,8 @@
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 
-import { InfiniteScroll } from "@/components/infinite-scroll";
 import { DEFAULT_LIMIT } from "@/constants";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { InfiniteScroll } from "@/components/infinite-scroll";
 import VideoGridCard from "@/modules/videos/ui/components/video-grid-card";
 import VideoRowCard from "@/modules/videos/ui/components/video-row-card";
 import { trpc } from "@/trpc/client";
@@ -16,7 +15,6 @@ interface ResultsSectionProps {
 }
 
 const ResultsSection = ({ query, categoryId }: ResultsSectionProps) => {
-  const isMobile = useIsMobile();
   const [result, resultQuery] = trpc.search.getMany.useSuspenseInfiniteQuery(
     {
       query,
@@ -31,8 +29,8 @@ const ResultsSection = ({ query, categoryId }: ResultsSectionProps) => {
   return (
     <Suspense key={`${query}-${categoryId}`} fallback={<div>Loading...</div>}>
       <ErrorBoundary fallback={<div>Something went wrong</div>}>
-        {isMobile ? (
-          <div className="flex flex-col gap-x-4 gap-y-8">
+        <>
+          <div className="flex flex-col gap-x-4 gap-y-8 md:hidden">
             {result.pages
               .flatMap((pages) => pages.items)
               .map((video) => (
@@ -41,8 +39,7 @@ const ResultsSection = ({ query, categoryId }: ResultsSectionProps) => {
                 </div>
               ))}
           </div>
-        ) : (
-          <div className="flex flex-col gap-x-4 gap-y-8">
+          <div className="hidden md:flex flex-col gap-x-4 gap-y-8">
             {result.pages
               .flatMap((pages) => pages.items)
               .map((video) => (
@@ -51,7 +48,7 @@ const ResultsSection = ({ query, categoryId }: ResultsSectionProps) => {
                 </div>
               ))}
           </div>
-        )}
+        </>
         <InfiniteScroll
           hasNextPage={resultQuery.hasNextPage}
           fetchNextPage={resultQuery.fetchNextPage}
