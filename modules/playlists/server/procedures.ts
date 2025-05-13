@@ -2,6 +2,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import {
   playlistsTable,
+  playlistVideos,
   usersTable,
   videoReactions,
   videosTable,
@@ -12,6 +13,67 @@ import { TRPCError } from "@trpc/server";
 import { and, desc, eq, getTableColumns, lt, or } from "drizzle-orm";
 
 export const playlistsRouter = createTRPCRouter({
+  getMany: protectedProcedure
+    .input(
+      z.object({
+        cursor: z
+          .object({
+            id: z.string().uuid(),
+            updatedAt: z.date(),
+          })
+          .nullish(),
+        limit: z.number().min(1).max(100),
+      })
+    )
+    .query(async ({ input, ctx }) => {
+      const { id: userId } = ctx.user;
+      const { cursor, limit } = input;
+
+      if (!userId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User not authenticated",
+        });
+      }
+
+      const data = await db
+        .select({
+          ...getTableColumns(playlistsTable),
+          user: usersTable,
+          videosCount: db.$count(
+            playlistVideos,
+            eq(playlistVideos.playlistId, playlistsTable.id)
+          ),
+        })
+        .from(playlistsTable)
+        .innerJoin(usersTable, eq(playlistsTable.userId, usersTable.id))
+        .where(
+          and(
+            eq(playlistsTable.userId, userId),
+            cursor
+              ? or(
+                  lt(playlistsTable.updatedAt, cursor.updatedAt),
+                  and(
+                    eq(playlistsTable.updatedAt, cursor.updatedAt),
+                    lt(playlistsTable.id, cursor.id)
+                  )
+                )
+              : undefined
+          )
+        )
+        .orderBy(desc(playlistsTable.updatedAt), desc(playlistsTable.id))
+        .limit(limit + 1);
+
+      const hasMore = data.length > limit;
+      const items = hasMore ? data.slice(0, -1) : data;
+
+      const lastItem = items[items.length - 1];
+      const nextCursor = hasMore
+        ? { id: lastItem.id, updatedAt: lastItem.updatedAt }
+        : null;
+
+      return { items, nextCursor };
+    }),
   createPlaylist: protectedProcedure
     .input(
       z.object({
