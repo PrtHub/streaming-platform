@@ -34,7 +34,7 @@ export const ResponsiveModal = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="mb-10">{title}</DialogTitle>
+          <DialogTitle className="mb-5">{title}</DialogTitle>
         </DialogHeader>
         {children}
       </DialogContent>

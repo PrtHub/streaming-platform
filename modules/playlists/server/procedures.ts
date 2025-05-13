@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { db } from "@/db";
 import {
+  playlistsTable,
   usersTable,
   videoReactions,
   videosTable,
@@ -11,6 +12,42 @@ import { TRPCError } from "@trpc/server";
 import { and, desc, eq, getTableColumns, lt, or } from "drizzle-orm";
 
 export const playlistsRouter = createTRPCRouter({
+  createPlaylist: protectedProcedure
+    .input(
+      z.object({
+        name: z.string().min(1).max(100),
+        description: z.string().max(1000).nullish(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const { id: userId } = ctx.user;
+      const { name, description } = input;
+
+      if (!userId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User not authenticated",
+        });
+      }
+
+      const [createdPlaylist] = await db
+        .insert(playlistsTable)
+        .values({
+          userId,
+          name,
+          description,
+        })
+        .returning();
+
+      if (!createdPlaylist) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Failed to create playlist",
+        });
+      }
+
+      return createdPlaylist;
+    }),
   getManyHistory: protectedProcedure
     .input(
       z.object({
