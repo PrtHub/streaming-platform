@@ -13,6 +13,176 @@ import { TRPCError } from "@trpc/server";
 import { and, desc, eq, getTableColumns, lt, or, sql } from "drizzle-orm";
 
 export const playlistsRouter = createTRPCRouter({
+  removeVideoToPlaylist: protectedProcedure
+    .input(
+      z.object({
+        playlistId: z.string().uuid(),
+        videoId: z.string().uuid(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const { id: userId } = ctx.user;
+      const { playlistId, videoId } = input;
+
+      if (!userId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User not authenticated",
+        });
+      }
+
+      const [existingPlaylist] = await db
+        .select()
+        .from(playlistsTable)
+        .where(
+          and(
+            eq(playlistsTable.id, playlistId),
+            eq(playlistsTable.userId, userId)
+          )
+        )
+        .limit(1);
+
+      if (!existingPlaylist) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Playlist not found",
+        });
+      }
+
+      const [existingVideo] = await db
+        .select()
+        .from(videosTable)
+        .where(eq(videosTable.id, videoId))
+        .limit(1);
+
+      if (!existingVideo) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Video not found",
+        });
+      }
+
+      const [existingPlaylistVideo] = await db
+        .select()
+        .from(playlistVideos)
+        .where(
+          and(
+            eq(playlistVideos.playlistId, playlistId),
+            eq(playlistVideos.videoId, videoId)
+          )
+        )
+        .limit(1);
+
+      if (!existingPlaylistVideo) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Video not found in playlist",
+        });
+      }
+
+      const [deletedPlaylistVideo] = await db
+        .delete(playlistVideos)
+        .where(
+          and(
+            eq(playlistVideos.playlistId, playlistId),
+            eq(playlistVideos.videoId, videoId)
+          )
+        )
+        .returning();
+
+      if (!deletedPlaylistVideo) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Failed to remove video from playlist",
+        });
+      }
+
+      return deletedPlaylistVideo;
+    }),
+  addVideoToPlaylist: protectedProcedure
+    .input(
+      z.object({
+        playlistId: z.string().uuid(),
+        videoId: z.string().uuid(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const { id: userId } = ctx.user;
+      const { playlistId, videoId } = input;
+
+      if (!userId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User not authenticated",
+        });
+      }
+
+      const [existingPlaylist] = await db
+        .select()
+        .from(playlistsTable)
+        .where(
+          and(
+            eq(playlistsTable.id, playlistId),
+            eq(playlistsTable.userId, userId)
+          )
+        )
+        .limit(1);
+
+      if (!existingPlaylist) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Playlist not found",
+        });
+      }
+
+      const [existingVideo] = await db
+        .select()
+        .from(videosTable)
+        .where(eq(videosTable.id, videoId))
+        .limit(1);
+
+      if (!existingVideo) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Video not found",
+        });
+      }
+
+      const [existingPlaylistVideo] = await db
+        .select()
+        .from(playlistVideos)
+        .where(
+          and(
+            eq(playlistVideos.playlistId, playlistId),
+            eq(playlistVideos.videoId, videoId)
+          )
+        )
+        .limit(1);
+
+      if (existingPlaylistVideo) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "Video already exists in playlist",
+        });
+      }
+
+      const [createdPlaylistVideo] = await db
+        .insert(playlistVideos)
+        .values({
+          playlistId,
+          videoId,
+        })
+        .returning();
+
+      if (!createdPlaylistVideo) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Failed to add video to playlist",
+        });
+      }
+
+      return createdPlaylistVideo;
+    }),
   getManyForVideo: protectedProcedure
     .input(
       z.object({
@@ -53,10 +223,12 @@ export const playlistsRouter = createTRPCRouter({
             eq(playlistVideos.playlistId, playlistsTable.id)
           ),
           containsVideo: videoId
-            ? sql<boolean>`SELECT EXISTS (
+            ? sql<boolean>`(
+              SELECT EXISTS (
               SELECT 1 FROM ${playlistVideos} pv 
               WHERE pv.playlist_id = ${playlistsTable.id} 
-              AND pv.video_id = ${videoId})`
+              AND pv.video_id = ${videoId})
+              )`
             : sql<boolean>`false`,
         })
         .from(playlistsTable)

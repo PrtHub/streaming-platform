@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { DEFAULT_LIMIT } from "@/constants";
 import { trpc } from "@/trpc/client";
 import { Loader2, SquareCheckIcon, SquareIcon } from "lucide-react";
+import { toast } from "sonner";
 
 interface AddPlaylistModalProps {
   open: boolean;
@@ -18,6 +19,8 @@ const AddPlaylistModal = ({
   videoId,
   onOpenChange,
 }: AddPlaylistModalProps) => {
+  const utils = trpc.useUtils();
+
   const { data, isLoading, hasNextPage, isFetchingNextPage, fetchNextPage } =
     trpc.playlists.getManyForVideo.useInfiniteQuery(
       {
@@ -29,6 +32,28 @@ const AddPlaylistModal = ({
         enabled: !!videoId && open,
       }
     );
+
+  const addVideo = trpc.playlists.addVideoToPlaylist.useMutation({
+    onSuccess: () => {
+      utils.playlists.getMany.invalidate();
+      utils.playlists.getManyForVideo.invalidate({ videoId });
+      toast.success("Video added to playlist");
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const removeVideo = trpc.playlists.removeVideoToPlaylist.useMutation({
+    onSuccess: () => {
+      utils.playlists.getMany.invalidate();
+      utils.playlists.getManyForVideo.invalidate({ videoId });
+      toast.success("Video removed from playlist");
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
 
   return (
     <>
@@ -50,12 +75,26 @@ const AddPlaylistModal = ({
                   key={playlist.id}
                   variant="ghost"
                   size="lg"
-                  className="flex items-start justify-start [&_svg]:size-5 px-2 w-full"
+                  className="flex items-center justify-start [&_svg]:size-5 px-2 w-full cursor-pointer"
+                  onClick={() => {
+                    if (playlist.containsVideo) {
+                      removeVideo.mutate({
+                        playlistId: playlist.id,
+                        videoId,
+                      });
+                    } else {
+                      addVideo.mutate({
+                        playlistId: playlist.id,
+                        videoId,
+                      });
+                    }
+                  }}
+                  disabled={addVideo.isPending || removeVideo.isPending}
                 >
                   {playlist.containsVideo ? (
-                    <SquareCheckIcon className="mr-2" />
+                    <SquareCheckIcon className="mr-2 size-4" />
                   ) : (
-                    <SquareIcon className="mr-2" />
+                    <SquareIcon className="mr-2 size-4" />
                   )}
                   {playlist.name}
                 </Button>
