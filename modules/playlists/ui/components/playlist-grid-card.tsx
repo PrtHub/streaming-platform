@@ -20,13 +20,14 @@ export const PlaylistGridCardSkeleton = () => {
 };
 
 const PlaylistGridCard = ({ playlist }: PlaylistGridCardProps) => {
+  console.log("PLAYLIST", playlist);
   return (
     <Link href={`/playlists/${playlist.id}`}>
       <div className="w-full flex flex-col gap-2 group">
         <PlaylistThumbnail
           title={playlist.name}
           videosCount={playlist.videosCount}
-          imageUrl={THUMBNAIL_URL}
+          imageUrl={playlist.thumbnailUrl || THUMBNAIL_URL}
         />
         <PlaylistInfo data={playlist} />
       </div>
