@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -5,12 +7,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import AddPlaylistModal from "@/modules/playlists/ui/components/add-playlist-modal";
 import {
   ListPlusIcon,
   MoreVertical,
   ShareIcon,
   Trash2Icon,
 } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 interface VideoMenuProps {
@@ -19,6 +23,8 @@ interface VideoMenuProps {
 }
 
 const VideoMenu = ({ videoId, onRemove }: VideoMenuProps) => {
+  const [openAddPlaylistModal, setOpenAddPlaylistModal] = useState(false);
+
   const fullUrl = `${
     process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
   }/videos/${videoId}`;
@@ -28,33 +34,43 @@ const VideoMenu = ({ videoId, onRemove }: VideoMenuProps) => {
     toast.success("Link copied, now share anywhere!");
   };
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant={"ghost"}
-          size="icon"
-          className="rounded-full cursor-pointer"
-        >
-          <MoreVertical />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-        <DropdownMenuItem onClick={handleShare} className="cursor-pointer">
-          <ShareIcon className="size-4 mr-2" />
-          Share
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => {}} className="cursor-pointer">
-          <ListPlusIcon className="size-4 mr-2" />
-          Add to Playlist
-        </DropdownMenuItem>
-        {onRemove && (
-          <DropdownMenuItem onClick={() => {}} className="cursor-pointer">
-            <Trash2Icon className="size-4 mr-2" />
-            Remove
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant={"ghost"}
+            size="icon"
+            className="rounded-full cursor-pointer"
+          >
+            <MoreVertical />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+          <DropdownMenuItem onClick={handleShare} className="cursor-pointer">
+            <ShareIcon className="size-4 mr-2" />
+            Share
           </DropdownMenuItem>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+          <DropdownMenuItem
+            onClick={() => setOpenAddPlaylistModal(true)}
+            className="cursor-pointer"
+          >
+            <ListPlusIcon className="size-4 mr-2" />
+            Add to Playlist
+          </DropdownMenuItem>
+          {onRemove && (
+            <DropdownMenuItem onClick={() => {}} className="cursor-pointer">
+              <Trash2Icon className="size-4 mr-2" />
+              Remove
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <AddPlaylistModal
+        open={openAddPlaylistModal}
+        onOpenChange={setOpenAddPlaylistModal}
+        videoId={videoId}
+      />
+    </>
   );
 };
 

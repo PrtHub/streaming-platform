@@ -10,9 +10,84 @@ import {
 } from "@/db/schema";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
-import { and, desc, eq, getTableColumns, lt, or } from "drizzle-orm";
+import { and, desc, eq, getTableColumns, lt, or, sql } from "drizzle-orm";
 
 export const playlistsRouter = createTRPCRouter({
+  getManyForVideo: protectedProcedure
+    .input(
+      z.object({
+        videoId: z.string().uuid(),
+        cursor: z
+          .object({
+            id: z.string().uuid(),
+            updatedAt: z.date(),
+          })
+          .nullish(),
+        limit: z.number().min(1).max(100),
+      })
+    )
+    .query(async ({ input, ctx }) => {
+      const { id: userId } = ctx.user;
+      const { cursor, limit, videoId } = input;
+
+      if (!userId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User not authenticated",
+        });
+      }
+
+      if (!videoId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Video ID is required",
+        });
+      }
+
+      const data = await db
+        .select({
+          ...getTableColumns(playlistsTable),
+          user: usersTable,
+          videosCount: db.$count(
+            playlistVideos,
+            eq(playlistVideos.playlistId, playlistsTable.id)
+          ),
+          containsVideo: videoId
+            ? sql<boolean>`SELECT EXISTS (
+              SELECT 1 FROM ${playlistVideos} pv 
+              WHERE pv.playlist_id = ${playlistsTable.id} 
+              AND pv.video_id = ${videoId})`
+            : sql<boolean>`false`,
+        })
+        .from(playlistsTable)
+        .innerJoin(usersTable, eq(playlistsTable.userId, usersTable.id))
+        .where(
+          and(
+            eq(playlistsTable.userId, userId),
+            cursor
+              ? or(
+                  lt(playlistsTable.updatedAt, cursor.updatedAt),
+                  and(
+                    eq(playlistsTable.updatedAt, cursor.updatedAt),
+                    lt(playlistsTable.id, cursor.id)
+                  )
+                )
+              : undefined
+          )
+        )
+        .orderBy(desc(playlistsTable.updatedAt), desc(playlistsTable.id))
+        .limit(limit + 1);
+
+      const hasMore = data.length > limit;
+      const items = hasMore ? data.slice(0, -1) : data;
+
+      const lastItem = items[items.length - 1];
+      const nextCursor = hasMore
+        ? { id: lastItem.id, updatedAt: lastItem.updatedAt }
+        : null;
+
+      return { items, nextCursor };
+    }),
   getMany: protectedProcedure
     .input(
       z.object({
