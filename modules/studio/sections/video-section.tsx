@@ -92,9 +92,15 @@ const VideoSection = () => {
                           ? formatDateSimple(new Date(video.createdAt))
                           : "Unknown"}
                       </TableCell>
-                      <TableCell className="text-center">{0}</TableCell>
-                      <TableCell className="text-center">{0}</TableCell>
-                      <TableCell className="text-center">{0}</TableCell>
+                      <TableCell className="text-center">
+                        {video.viewsCount}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {video.commentsCount}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {video.likesCount}
+                      </TableCell>
                     </TableRow>
                   </Link>
                 ))

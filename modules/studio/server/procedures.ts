@@ -1,8 +1,14 @@
 import { z } from "zod";
-import { and, desc, eq, lt, or } from "drizzle-orm";
+import { and, desc, eq, getTableColumns, lt, or } from "drizzle-orm";
 
 import { db } from "@/db";
-import { videosTable } from "@/db/schema";
+import {
+  commentTable,
+  usersTable,
+  videoReactions,
+  videosTable,
+  videoViews,
+} from "@/db/schema";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
 
@@ -43,10 +49,28 @@ export const studioRouter = createTRPCRouter({
       const { cursor, limit } = input;
       const { id: userId } = ctx.user;
 
-      // "keyset pagination" or "cursor-based pagination"
       const data = await db
-        .select()
+        .select({
+          ...getTableColumns(videosTable),
+          user: usersTable,
+          viewsCount: db.$count(
+            videoViews,
+            eq(videoViews.videoId, videosTable.id)
+          ),
+          likesCount: db.$count(
+            videoReactions,
+            and(
+              eq(videoReactions.videoId, videosTable.id),
+              eq(videoReactions.type, "like")
+            )
+          ),
+          commentsCount: db.$count(
+            commentTable,
+            eq(commentTable.videoId, videosTable.id)
+          ),
+        })
         .from(videosTable)
+        .innerJoin(usersTable, eq(videosTable.userId, usersTable.id))
         .where(
           and(
             eq(videosTable.userId, userId),
