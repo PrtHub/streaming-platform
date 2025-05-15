@@ -13,6 +13,205 @@ import { TRPCError } from "@trpc/server";
 import { and, desc, eq, getTableColumns, lt, or, sql } from "drizzle-orm";
 
 export const playlistsRouter = createTRPCRouter({
+  removePlaylist: protectedProcedure
+    .input(
+      z.object({
+        playlistId: z.string().uuid(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const { id: userId } = ctx.user;
+      const { playlistId } = input;
+
+      if (!userId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User not authenticated",
+        });
+      }
+
+      const [existingPlaylist] = await db
+        .select()
+        .from(playlistsTable)
+        .where(
+          and(
+            eq(playlistsTable.id, playlistId),
+            eq(playlistsTable.userId, userId)
+          )
+        )
+        .limit(1);
+
+      if (!existingPlaylist) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Playlist not found",
+        });
+      }
+
+      const [deletedPlaylist] = await db
+        .delete(playlistsTable)
+        .where(
+          and(
+            eq(playlistsTable.id, playlistId),
+            eq(playlistsTable.userId, userId)
+          )
+        )
+        .returning();
+
+      if (!deletedPlaylist) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Failed to remove playlist",
+        });
+      }
+
+      return deletedPlaylist;
+    }),
+  getOne: protectedProcedure
+    .input(
+      z.object({
+        playlistId: z.string().uuid(),
+      })
+    )
+    .query(async ({ input, ctx }) => {
+      const { id: userId } = ctx.user;
+      const { playlistId } = input;
+
+      if (!userId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User not authenticated",
+        });
+      }
+
+      const [existingPlaylist] = await db
+        .select()
+        .from(playlistsTable)
+        .where(
+          and(
+            eq(playlistsTable.id, playlistId),
+            eq(playlistsTable.userId, userId)
+          )
+        )
+        .limit(1);
+
+      if (!existingPlaylist) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Playlist not found",
+        });
+      }
+
+      return existingPlaylist;
+    }),
+  getPlaylistVideos: protectedProcedure
+    .input(
+      z.object({
+        playlistId: z.string().uuid(),
+        cursor: z
+          .object({
+            id: z.string().uuid(),
+            updatedAt: z.date(),
+          })
+          .nullish(),
+        limit: z.number().min(1).max(100),
+      })
+    )
+    .query(async ({ input, ctx }) => {
+      const { id: userId } = ctx.user;
+      const { cursor, limit, playlistId } = input;
+
+      if (!userId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User not authenticated",
+        });
+      }
+
+      const [existingPlaylist] = await db
+        .select()
+        .from(playlistsTable)
+        .where(
+          and(
+            eq(playlistsTable.id, playlistId),
+            eq(playlistsTable.userId, userId)
+          )
+        )
+        .limit(1);
+
+      if (!existingPlaylist) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Playlist not found",
+        });
+      }
+
+      const videosFromPlaylist = db.$with("videos_from_playlist").as(
+        db
+          .select({
+            videoId: playlistVideos.videoId,
+          })
+          .from(playlistVideos)
+          .where(eq(playlistVideos.playlistId, playlistId))
+      );
+
+      const data = await db
+        .with(videosFromPlaylist)
+        .select({
+          ...getTableColumns(videosTable),
+          user: usersTable,
+          viewsCount: db.$count(
+            videoViews,
+            eq(videoViews.videoId, videosTable.id)
+          ),
+          likesCount: db.$count(
+            videoReactions,
+            and(
+              eq(videoReactions.videoId, videosTable.id),
+              eq(videoReactions.type, "like")
+            )
+          ),
+          dislikesCount: db.$count(
+            videoReactions,
+            and(
+              eq(videoReactions.videoId, videosTable.id),
+              eq(videoReactions.type, "dislike")
+            )
+          ),
+        })
+        .from(videosTable)
+        .innerJoin(usersTable, eq(videosTable.userId, usersTable.id))
+        .innerJoin(
+          videosFromPlaylist,
+          eq(videosFromPlaylist.videoId, videosTable.id)
+        )
+        .where(
+          and(
+            cursor
+              ? or(
+                  lt(videosTable.updatedAt, cursor.updatedAt),
+                  and(
+                    eq(videosTable.updatedAt, cursor.updatedAt),
+                    lt(videosTable.id, cursor.id)
+                  )
+                )
+              : undefined,
+            eq(videosTable.visibility, "public")
+          )
+        )
+        .orderBy(desc(videosTable.updatedAt), desc(videosTable.id))
+        .limit(limit + 1);
+
+      const hasMore = data.length > limit;
+      const items = hasMore ? data.slice(0, -1) : data;
+
+      const lastItem = items[items.length - 1];
+      const nextCursor = hasMore
+        ? { id: lastItem.id, updatedAt: lastItem.updatedAt }
+        : null;
+
+      return { items, nextCursor };
+    }),
   removeVideoToPlaylist: protectedProcedure
     .input(
       z.object({

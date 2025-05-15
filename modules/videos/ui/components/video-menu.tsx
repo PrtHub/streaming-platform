@@ -58,7 +58,7 @@ const VideoMenu = ({ videoId, onRemove }: VideoMenuProps) => {
             Add to Playlist
           </DropdownMenuItem>
           {onRemove && (
-            <DropdownMenuItem onClick={() => {}} className="cursor-pointer">
+            <DropdownMenuItem onClick={onRemove} className="cursor-pointer">
               <Trash2Icon className="size-4 mr-2" />
               Remove
             </DropdownMenuItem>
