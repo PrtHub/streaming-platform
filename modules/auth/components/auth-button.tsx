@@ -11,6 +11,11 @@ export const AuthButton = () => {
         <UserButton>
           <UserButton.MenuItems>
             <UserButton.Link
+              href="/users/current"
+              label="My Channel"
+              labelIcon={<User2 className="size-4" />}
+            />
+            <UserButton.Link
               href="/studio"
               label="Studio"
               labelIcon={<Clapperboard className="size-4" />}

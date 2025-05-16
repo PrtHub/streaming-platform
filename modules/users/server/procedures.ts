@@ -1,8 +1,23 @@
 import { db } from "@/db";
-import { subscriptionTable, usersTable, videosTable } from "@/db/schema";
+import {
+  subscriptionTable,
+  usersTable,
+  videoReactions,
+  videosTable,
+  videoViews,
+} from "@/db/schema";
 import { baseProcedure, createTRPCRouter } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
-import { eq, getTableColumns, inArray, isNotNull } from "drizzle-orm";
+import {
+  and,
+  desc,
+  eq,
+  getTableColumns,
+  inArray,
+  isNotNull,
+  lt,
+  or,
+} from "drizzle-orm";
 import { z } from "zod";
 
 export const usersRouter = createTRPCRouter({
@@ -60,5 +75,74 @@ export const usersRouter = createTRPCRouter({
       }
 
       return existingUser;
+    }),
+  getManyVideos: baseProcedure
+    .input(
+      z.object({
+        userId: z.string().uuid().nullish(),
+        cursor: z
+          .object({
+            id: z.string().uuid(),
+            updatedAt: z.date(),
+          })
+          .nullish(),
+        limit: z.number().min(1),
+      })
+    )
+    .query(async ({ input }) => {
+      const { userId, cursor, limit } = input;
+
+      const data = await db
+        .select({
+          ...getTableColumns(videosTable),
+          user: usersTable,
+          viewsCount: db.$count(
+            videoViews,
+            eq(videoViews.videoId, videosTable.id)
+          ),
+          likesCount: db.$count(
+            videoReactions,
+            and(
+              eq(videoReactions.videoId, videosTable.id),
+              eq(videoReactions.type, "like")
+            )
+          ),
+          dislikesCount: db.$count(
+            videoReactions,
+            and(
+              eq(videoReactions.videoId, videosTable.id),
+              eq(videoReactions.type, "dislike")
+            )
+          ),
+        })
+        .from(videosTable)
+        .innerJoin(usersTable, eq(videosTable.userId, usersTable.id))
+        .where(
+          and(
+            userId ? eq(videosTable.userId, userId) : undefined,
+            cursor
+              ? or(
+                  lt(videosTable.updatedAt, cursor.updatedAt),
+                  and(
+                    eq(videosTable.updatedAt, cursor.updatedAt),
+                    lt(videosTable.id, cursor.id)
+                  )
+                )
+              : undefined,
+            eq(videosTable.visibility, "public")
+          )
+        )
+        .orderBy(desc(videosTable.updatedAt), desc(videosTable.id))
+        .limit(limit + 1);
+
+      const hasMore = data.length > limit;
+      const items = hasMore ? data.slice(0, -1) : data;
+
+      const lastItem = items[items.length - 1];
+      const nextCursor = hasMore
+        ? { id: lastItem.id, updatedAt: lastItem.updatedAt }
+        : null;
+
+      return { items, nextCursor };
     }),
 });

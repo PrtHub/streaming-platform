@@ -34,7 +34,7 @@ const StudioSidebarHeader = () => {
 
   return (
     <div className="p-3 group transition-all duration-300 border-b border-border/30">
-      <Link href="/">
+      <Link href="/users/current">
         <div
           className={cn(
             "flex flex-col items-center text-center justify-center transition-all duration-300"
