@@ -19,7 +19,7 @@ const SubscriptionButton = ({
       disabled={disable}
       onClick={onClick}
       className={cn(
-        "rounded-full text-lg py-6 font-semibold cursor-pointer",
+        "rounded-full text-base py-3 font-semibold cursor-pointer",
         className
       )}
       variant={isSubscribed ? "secondary" : "default"}
