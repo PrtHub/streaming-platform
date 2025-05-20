@@ -25,6 +25,7 @@ export const useSubscriptions = ({
         utils.videos.getOne.invalidate({ id: fromVideoId });
       }
       utils.users.getOne.invalidate({ id: userId });
+      utils.subscriptions.getManySubscriptions.invalidate();
     },
     onError: (err) => {
       toast.error(err?.message);
@@ -43,6 +44,7 @@ export const useSubscriptions = ({
         utils.videos.getOne.invalidate({ id: fromVideoId });
       }
       utils.users.getOne.invalidate({ id: userId });
+      utils.subscriptions.getManySubscriptions.invalidate();
     },
     onError: (err) => {
       toast.error(err?.message);

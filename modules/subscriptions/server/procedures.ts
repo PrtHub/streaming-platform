@@ -2,11 +2,76 @@ import { z } from "zod";
 
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { db } from "@/db";
-import { and, desc, eq, getTableColumns } from "drizzle-orm";
+import { and, desc, eq, getTableColumns, lt, or } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { subscriptionTable, usersTable } from "@/db/schema";
 
 export const subscriptionsRouter = createTRPCRouter({
+  getManySubscriptions: protectedProcedure
+     .input(
+       z.object({
+         cursor: z
+           .object({
+             creatorId: z.string().uuid(),
+             updatedAt: z.date(),
+           })
+           .nullish(),
+         limit: z.number().min(1).max(100),
+       })
+     )
+     .query(async ({ input, ctx }) => {
+       const { id: userId } = ctx.user;
+       const { cursor, limit } = input;
+ 
+       if (!userId) {
+         throw new TRPCError({
+           code: "UNAUTHORIZED",
+           message: "User not authenticated",
+         });
+       }
+ 
+      
+       const data = await db
+         .select({
+           ...getTableColumns(subscriptionTable),
+           user: {
+            ...getTableColumns(usersTable),
+            subscriberCount: db.$count(
+              subscriptionTable,
+              eq(subscriptionTable.creatorId, usersTable.id)
+            ),
+           },
+         })
+         .from(subscriptionTable)
+         .innerJoin(usersTable, eq(subscriptionTable.creatorId, usersTable.id))
+         .where(
+           and(
+             cursor
+               ? or(
+                   lt(subscriptionTable.updatedAt, cursor.updatedAt),
+                   and(
+                     eq(subscriptionTable.updatedAt, cursor.updatedAt),
+                     lt(subscriptionTable.creatorId, cursor.creatorId)
+                   )
+                 )
+               : undefined,
+             eq(subscriptionTable.viewerId, userId)
+           )
+         )
+         .orderBy(desc(subscriptionTable.updatedAt))
+         .limit(limit + 1);
+ 
+       const hasMore = data.length > limit;
+       const items = hasMore ? data.slice(0, -1) : data;
+ 
+       const lastItem = items[items.length - 1];
+       const nextCursor = hasMore
+         ? { creatorId: lastItem.creatorId, updatedAt: lastItem.updatedAt }
+         : null;
+ 
+       return { items, nextCursor };
+     }),
+
   // getManySubscribedCreators: protectedProcedure.query(async ({ ctx }) => {
   //   const { id: userId } = ctx.user;
 
@@ -26,9 +91,9 @@ export const subscriptionsRouter = createTRPCRouter({
   //         eq(subscriptionTable.creatorId, usersTable.id)
   //       ),
   //     })
-  //     .from(usersTable)
+  //     .from(subscriptionTable)
   //     .innerJoin(
-  //       subscriptionTable,
+  //       usersTable,
   //       and(
   //         eq(subscriptionTable.creatorId, usersTable.id),
   //         eq(subscriptionTable.viewerId, userId)
