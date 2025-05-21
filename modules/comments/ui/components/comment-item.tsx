@@ -158,7 +158,7 @@ const CommentItem = ({ variant = "comment", comment }: CommentItemProps) => {
         {userId === comment.user.clerkId && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild className="cursor-pointer">
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" disabled={remove.isPending}>
                 <MoreVerticalIcon className="w-4 h-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -166,6 +166,7 @@ const CommentItem = ({ variant = "comment", comment }: CommentItemProps) => {
               <DropdownMenuItem
                 className="w-full cursor-pointer"
                 onClick={() => {}}
+                disabled={remove.isPending}
               >
                 {" "}
                 <Edit className="w-4 h-4" /> Edit
@@ -173,6 +174,7 @@ const CommentItem = ({ variant = "comment", comment }: CommentItemProps) => {
               <DropdownMenuItem
                 className="w-full cursor-pointer"
                 onClick={() => remove.mutate({ id: comment.id })}
+                disabled={remove.isPending}
               >
                 {" "}
                 <Trash2Icon className="w-4 h-4" /> Remove
