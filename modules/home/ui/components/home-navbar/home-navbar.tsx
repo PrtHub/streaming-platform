@@ -11,10 +11,9 @@ export const HomeNavbar = () => {
       <div className="flex items-center gap-4 w-full">
         <section className="flex items-center flex-shrink-0 ml-1.5">
           <SidebarTrigger className="cursor-pointer" />
-          <Link href="/">
+          <Link href="/" className="cursor-pointer hidden md:block">
             <div className="flex items-center gap-1 p-4 ">
               <Image src="/youtube.svg" width={32} height={32} alt="YouTube" />
-
               <p className="text-xl tracking-tight font-semibold">YouTube</p>
             </div>
           </Link>
@@ -22,7 +21,6 @@ export const HomeNavbar = () => {
         <section className="flex-1 flex justify-center mx-auto max-w-[720px]">
           <SearchInput />
         </section>
-
         <section className="flex flex-shrink-0 items-center">
           <AuthButton />
         </section>

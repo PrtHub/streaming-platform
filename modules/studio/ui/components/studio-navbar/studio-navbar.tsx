@@ -10,7 +10,7 @@ export const StudioNavbar = () => {
       <div className="flex items-center gap-4 w-full">
         <section className="flex items-center flex-shrink-0 ml-1.5">
           <SidebarTrigger className="cursor-pointer" />
-          <Link href="/studio">
+          <Link href="/studio" className="cursor-pointer hidden md:block">
             <div className="flex items-center gap-1 p-4 ">
               <Image
                 src="/youtube.svg"
@@ -18,12 +18,10 @@ export const StudioNavbar = () => {
                 height={32}
                 alt="YouTube Studio"
               />
-
               <p className="text-xl tracking-tight font-semibold">Studio</p>
             </div>
           </Link>
         </section>
-
         <section className="flex ml-auto flex-shrink-0 gap-5 items-center">
           <StudioUploadModal />
           <AuthButton />
