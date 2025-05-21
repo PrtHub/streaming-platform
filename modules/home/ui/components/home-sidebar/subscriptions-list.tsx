@@ -12,7 +12,7 @@ import UserAvatar from "@/components/user-avatar";
 import { DEFAULT_LIMIT } from "@/constants";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/trpc/client";
-import { ChevronRight, ListIcon } from "lucide-react";
+import { ListIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -31,11 +31,9 @@ export const SubscriptionsList = () => {
 
   return (
     <SidebarGroup>
-      {(data?.pages?.flatMap((page) => page?.items)?.length ?? 0) > 0 && (
-        <SidebarGroupLabel className="flex items-center ml-1 font-semibold text-sm mb-2">
-          Subscriptions <ChevronRight className="size-3 mt-1" />
-        </SidebarGroupLabel>
-      )}
+      <SidebarGroupLabel className="flex items-center ml-1 font-semibold text-sm mb-2">
+        Subscriptions
+      </SidebarGroupLabel>
       <SidebarGroupContent>
         <SidebarMenu className="flex flex-col gap-1">
           {isLoading && (
