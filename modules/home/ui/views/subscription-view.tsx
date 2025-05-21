@@ -1,3 +1,4 @@
+import SubscriptionCreatorsSection from "../sections/subscription-creators-section";
 import SubscriptionVideosSection from "../sections/subscription-videos-section";
 
 const SubscriptionsView = () => {
@@ -9,6 +10,7 @@ const SubscriptionsView = () => {
           Videos from channels you follow
         </p>
       </header>
+      <SubscriptionCreatorsSection />
       <SubscriptionVideosSection />
     </div>
   );

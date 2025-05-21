@@ -16,7 +16,7 @@ export const subscriptionsRouter = createTRPCRouter({
              updatedAt: z.date(),
            })
            .nullish(),
-         limit: z.number().min(1).max(100),
+         limit: z.number().min(1).max(1000000000),
        })
      )
      .query(async ({ input, ctx }) => {

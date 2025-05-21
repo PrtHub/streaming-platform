@@ -22,7 +22,8 @@ const SubscriptionVideosSection = () => {
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <ErrorBoundary fallback={<div>Something went wrong</div>}>
-        <div>
+        <div className="flex flex-col gap-4">
+          <h1 className="text-2xl font-semibold">Latest videos</h1>
           <section className="gap-4 gap-y-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 [@media(min-width:1980px)]:grid-cols-5 [@media(min-width:2200px)]:grid-cols-5">
             {videos.pages
               ?.flatMap((page) => page?.items)
