@@ -13,8 +13,8 @@ export const HomeNavbar = () => {
           <SidebarTrigger className="cursor-pointer" />
           <Link href="/" className="cursor-pointer hidden md:block">
             <div className="flex items-center gap-1 p-4 ">
-              <Image src="/youtube.svg" width={32} height={32} alt="YouTube" />
-              <p className="text-xl tracking-tight font-semibold">YouTube</p>
+              <Image src="/youtube.svg" width={32} height={32} alt="Yoo Play" />
+              <p className="text-xl tracking-tight font-semibold">YooPlay</p>
             </div>
           </Link>
         </section>

@@ -13,8 +13,8 @@ const roboto = Roboto({
 });
 
 export const metadata: Metadata = {
-  title: "Youtube Clone",
-  description: "Youtube Clone",
+  title: "Yoo Play",
+  description: "Yoo Play",
 };
 
 export default function RootLayout({

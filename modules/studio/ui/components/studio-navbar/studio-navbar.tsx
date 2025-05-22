@@ -16,7 +16,7 @@ export const StudioNavbar = () => {
                 src="/youtube.svg"
                 width={32}
                 height={32}
-                alt="YouTube Studio"
+                alt="Yoo Play Studio"
               />
               <p className="text-xl tracking-tight font-semibold">Studio</p>
             </div>

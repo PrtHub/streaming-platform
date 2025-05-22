@@ -2,7 +2,7 @@
   "lockfileVersion": 1,
   "workspaces": {
     "": {
-      "name": "youtube",
+      "name": "yooplay",
       "dependencies": {
         "@clerk/nextjs": "^6.12.10",
         "@google/genai": "^0.7.0",
